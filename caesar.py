@@ -16,7 +16,7 @@ def decrypt(key,ciphertext):
     plaintext=""
     #YOUR CODE HERE
     for i in ciphertext:
-        new_ord = ord(i)-key+1
+        new_ord = ord(i)-key
         if new_ord < 65:
             new_ord += 26
         elif new_ord > 90:
