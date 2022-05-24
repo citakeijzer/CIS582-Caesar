@@ -17,17 +17,17 @@ def hash_collision(k):
     database = {}
     
     while continueSearch:
-      testcase = os.urandom(64)
-      testcase_hex = hashlib.sha256(testcase).hexdigest()
-      testcase_int = int(testcase_hex,16)
-      testcase_bin = bin(testcase_int)
-      testcase_bin_k = testcase_bin[-k:]
+        testcase = os.urandom(64)
+        testcase_hex = hashlib.sha256(testcase).hexdigest()
+        testcase_int = int(testcase_hex,16)
+        testcase_bin = bin(testcase_int)
+        testcase_bin_k = testcase_bin[-k:]
       
-      if testcase_bin_k in database:
-        x = database[testcase_bin_k]
-        y = testcase
-        continueSearch = False
-      else: 
-        database[testcase_bin_k] = testcase
+        if testcase_bin_k in database:
+            x = database[testcase_bin_k]
+            y = testcase
+            continueSearch = False
+        else: 
+            database[testcase_bin_k] = testcase
     
     return( x, y )
