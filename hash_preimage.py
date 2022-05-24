@@ -16,10 +16,13 @@ def hash_preimage(target_string):
         testcase_int = int(testcase_hex,16)
         testcase_bin = bin(testcase_int)
         testcase_bin_k = testcase_bin[-k:]
-      
-        if testcase_bin_k == target_k:
-            nonce = testcase
-            continueSearch = False
+        
+        for i in range(k):
+            if testcase_bin_k[i] != target_k[i]:
+                break
+            if i>=(k-1):
+                nonce = testcase
+                continueSearch = False
     
     return( nonce )
 
