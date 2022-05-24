@@ -18,7 +18,7 @@ def hash_collision(k):
     
     while continueSearch:
       testcase = os.urandom(64)
-      testcase_hex = hashlib.sha256(testcase.encode('utf-8')).hexdigest()
+      testcase_hex = hashlib.sha256(testcase).hexdigest()
       testcase_int = int(testcase_hex,16)
       testcase_bin_k = bin(testcase_int)[-k:]
       
