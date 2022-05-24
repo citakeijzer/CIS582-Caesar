@@ -20,7 +20,8 @@ def hash_collision(k):
       testcase = os.urandom(64)
       testcase_hex = hashlib.sha256(testcase).hexdigest()
       testcase_int = int(testcase_hex,16)
-      testcase_bin_k = bin(testcase_int)[-k:]
+      testcase_bin = bin(testcase_int)
+      testcase_bin_k = testcase_bin[-k:]
       
       if testcase_bin_k in database:
         x = database[testcase_bin_k]
