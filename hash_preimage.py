@@ -6,6 +6,19 @@ def hash_preimage(target_string):
         print( "Input should be a string of bits" )
         return
     nonce = b'\x00'
+    
+    k = len(target_string)
 
+    while continueSearch:
+        testcase = os.urandom(64)
+        testcase_hex = hashlib.sha256(testcase).hexdigest()
+        testcase_int = int(testcase_hex,16)
+        testcase_bin = bin(testcase_int)
+        testcase_bin_k = testcase_bin[-k:]
+      
+        if testcase_bin_k == target_string:
+            nonce = testcase
+            continueSearch = False
+    
     return( nonce )
 
