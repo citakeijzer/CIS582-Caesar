@@ -15,6 +15,8 @@ def hash_preimage(target_string):
         testcase_int = int(testcase_hex,16)
         testcase_bin = bin(testcase_int)
         testcase_bin_k = testcase_bin[-k:]
+        print(testcase_bin_k)
+        print(target_string)
       
         if testcase_bin_k == target_string:
             nonce = testcase
