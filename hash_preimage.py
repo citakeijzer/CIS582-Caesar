@@ -17,12 +17,9 @@ def hash_preimage(target_string):
         testcase_bin = bin(testcase_int)
         testcase_bin_k = testcase_bin[-k:]
         
-        for i in range(k):
-            if testcase_bin_k[i] != target_k[i]:
-                break
-            if i>=(k-1):
-                nonce = testcase
-                continueSearch = False
+        if testcase_bin_k == target_string:
+            nonce = testcase
+            continueSearch = False
     
-    return( nonce )
+    return nonce
 
