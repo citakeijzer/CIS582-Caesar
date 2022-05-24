@@ -8,8 +8,8 @@ def hash_preimage(target_string):
     nonce = b'\x00'
     
     k = len(target_string)
-    target_k = target_string[-k:]
-
+    continueSearch = True
+    
     while continueSearch:
         testcase = os.urandom(64)
         testcase_hex = hashlib.sha256(testcase).hexdigest()
