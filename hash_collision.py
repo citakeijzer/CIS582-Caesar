@@ -22,11 +22,11 @@ def hash_collision(k):
       testcase_int = int(testcase_hex,16)
       testcase_bin_k = bin(testcase_int)[-k:]
       
-      if testcase_bin_k not in database:
-        database[testcase_bin_k] = testcase
-      else:
+      if testcase_bin_k in database:
         x = database[testcase_bin_k]
         y = testcase
         continueSearch = False
+      else: 
+        database[testcase_bin_k] = testcase
     
     return( x, y )
