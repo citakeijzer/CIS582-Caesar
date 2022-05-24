@@ -14,7 +14,7 @@ def hash_collision(k):
     y = b'\x00'
     
     continueSearch = True
-    database = {}
+    testeddatabase = {}
     
     while continueSearch:
         testcase = os.urandom(64)
@@ -23,11 +23,11 @@ def hash_collision(k):
         testcase_bin = bin(testcase_int)
         testcase_bin_k = testcase_bin[-k:]
       
-        if testcase_bin_k in database:
-            x = database[testcase_bin_k]
+        if testcase_bin_k in testeddatabase:
+            x = testeddatabase[testcase_bin_k]
             y = testcase
             continueSearch = False
         else: 
-            database[testcase_bin_k] = testcase
+            testeddatabase[testcase_bin_k] = testcase
     
     return( x, y )
