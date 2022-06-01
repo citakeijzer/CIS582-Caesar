@@ -14,7 +14,7 @@ def keygen():
 
 def encrypt(pk,m):
     q = int ((p - 1)/2) 
-    a = random.SystemRandom().randint(1, q)
+    r = random.SystemRandom().randint(1, q)
     c1 = pow(g, r, p)
     h = pk
     c2 = pow(h, r, p) * m % p
