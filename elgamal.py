@@ -3,18 +3,27 @@ import random
 from params import p
 from params import g
 
+# if   q  is unknown, it suffices to generate   a  uniformly in the range   1,…,p , 
 def keygen():
-    sk = 0
-    pk = 0
+    q = int ((p−1)/2) 
+    a = random.SystemRandom().randint(1, q)
+    h = pow(g, a, p)
+    sk = a
+    pk = h
     return pk,sk
 
 def encrypt(pk,m):
-    c1 = 0
-    c2 = 0
+    q = int ((p−1)/2) 
+    a = random.SystemRandom().randint(1, q)
+    c1 = pow(g, r, p)
+    h = pk
+    c2 = pow(h, r, p) * m % p
     return [c1,c2]
 
 def decrypt(sk,c):
-    m = 0
+    # m =c2 * c1^-a mod p
+    a = sk
+    m = pow(c[0],-a,p) * c[1] % p
     return m
 
 
