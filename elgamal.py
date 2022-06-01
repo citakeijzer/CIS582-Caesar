@@ -5,7 +5,7 @@ from params import g
 
 # if   q  is unknown, it suffices to generate   a  uniformly in the range   1,…,p , 
 def keygen():
-    q = int ((p−1)/2) 
+    q = int ((p − 1)/2) 
     a = random.SystemRandom().randint(1, q)
     h = pow(g, a, p)
     sk = a
@@ -13,7 +13,7 @@ def keygen():
     return pk,sk
 
 def encrypt(pk,m):
-    q = int ((p−1)/2) 
+    q = int ((p − 1)/2) 
     a = random.SystemRandom().randint(1, q)
     c1 = pow(g, r, p)
     h = pk
