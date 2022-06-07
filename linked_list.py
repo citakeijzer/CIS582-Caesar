@@ -30,7 +30,7 @@ def next_block(last_block):
     newhash = last_block.calc_hash()
     newcontent = 'this is block ' + str(newindex)
     newblock = Block(newindex, datetime.now(), newcontent, newhash)
-    print newcontent
+    print(newcontent)
     return newblock
     
 # append 5 blocks to the blockchain
