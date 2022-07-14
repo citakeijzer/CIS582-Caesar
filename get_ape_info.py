@@ -39,7 +39,7 @@ def get_ape_info(apeID):
 	
 	data['image'] = responsedata['image']
 	
-	for instance in ipfs_res['attributes']:	
+	for instance in responsedata['attributes']:	
 		if instance['trait_type'] == 'Eyes':
 			data['eyes'] = instance['value']
 			break
