@@ -13,7 +13,7 @@ app.url_map.strict_slashes = False
 
     print("Content: ", content)
     if content == None:
-        result = False
+        return False
 
     payload = content.get('payload')
     sigature = content.get('sig')
@@ -23,12 +23,12 @@ app.url_map.strict_slashes = False
         
     if platform == "Ethereum":
         encoded_msg = eth_account.messages.encode_defunct(text = json.dumps(payload))
-        if eth_account.Account.recover_message(encoded_msg,signature=sig) == pk:
+        if eth_account.Account.recover_message(encoded_msg,signature=signature) == pk:
             result = True
         else:
             result = False
     else:
-        if algosdk.util.verify_bytes(json.dumps(payload).encode('utf-8'), sig, pk) == True:
+        if algosdk.util.verify_bytes(json.dumps(payload).encode('utf-8'), signature, pk) == True:
             result = True
         else:
             result = False
