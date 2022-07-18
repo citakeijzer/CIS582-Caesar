@@ -22,13 +22,13 @@ app.url_map.strict_slashes = False
     message = payload.get('message')
         
     if platform == "Ethereum":
-        encoded_msg = eth_account.messages.encode_defunct(text = payload)
+        encoded_msg = eth_account.messages.encode_defunct(text = json.dumps(payload))
         if eth_account.Account.recover_message(encoded_msg,signature=sig) == pk:
             result = True
         else:
             result = False
     else:
-        if algosdk.util.verify_bytes(payload.encode('utf-8'), sig, pk) == True:
+        if algosdk.util.verify_bytes(json.dumps(payload).encode('utf-8'), sig, pk) == True:
             result = True
         else:
             result = False
