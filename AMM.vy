@@ -24,9 +24,7 @@ def provideLiquidity(tokenA_addr: address, tokenB_addr: address, tokenA_quantity
 	self.tokenA = ERC20(tokenA_addr)
 	self.tokenA.transferFrom(msg.sender, self, tokenA_quantity)
 	self.tokenAQty = tokenA_quantity
-	self.initialTokenAQty = tokenA_quantity
 	self.tokenBQty = tokenB_quantity
-	self.initialTokenBQty = tokenB_quantity
 	self.tokenB = ERC20(tokenB_addr)
 	self.tokenB.transferFrom(msg.sender, self, tokenB_quantity)
 	self.owner = msg.sender
