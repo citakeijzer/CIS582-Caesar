@@ -9,13 +9,12 @@ api = Api(app)
 app.url_map.strict_slashes = False
 
 @app.route('/verify', methods=['GET','POST'])
-def verify():
     content = request.get_json(silent=True)
-    print("Current content:", content)
-    if content == None:
-        result = False
-    
-    if content.payload.platform == "Ethereum":
+    print("Working ETH",content)
+    #Verify Etherium Signature
+    result = False #Should only be true if signature validates
+    if content.payload.platform=="Ethereum":
+      
         eth_account.Account.enable_unaudited_hdwallet_features()
         acct, mnemonic = eth_account.Account.create_with_mnemonic()
 
@@ -26,11 +25,12 @@ def verify():
 
         eth_encoded_msg = eth_account.messages.encode_defunct(text=payload)
         eth_sig_obj = eth_account.Account.sign_message(eth_encoded_msg,eth_sk)
-
+        
+        # print( eth_sig_obj.messageHash )  
         if eth_account.Account.recover_message(eth_encoded_msg,signature=eth_sig_obj.signature.hex()) == eth_pk:
-            print( "Eth sig verifies!" )
-            result = True
-    
+            result=True
+        
+    #Verify Algorand Signature
     elif content.payload.platform=="Algorand":
         payload = content.payload
 
@@ -39,10 +39,10 @@ def verify():
 
         if algosdk.util.verify_bytes(payload.encode('utf-8'),algo_sig_str,algo_pk):
             print( "Algo sig verifies!" )
-            result = True
+            result=True
+        
     else:
         result = False
-
     
     return jsonify(result)
 
