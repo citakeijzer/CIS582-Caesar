@@ -11,9 +11,9 @@ app.url_map.strict_slashes = False
 @app.route('/verify', methods=['GET','POST'])
     content = request.get_json(silent=True, force=True)
 
-    print("Content: ", content)
+    print(content)
     if content == None:
-        return False
+        return jsonify(False)
 
     payload = content.get('payload')
     signature = content.get('sig')
