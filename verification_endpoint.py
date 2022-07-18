@@ -17,9 +17,11 @@ def verify():
         return jsonify(False)
 
     payload = content.get('payload')
-    signature = content.get('sig')
     platform = payload.get('platform')
+
     pk = payload.get('pk')
+    signature = content.get('sig')
+    
     message = payload.get('message')
         
     if platform == "Ethereum":
