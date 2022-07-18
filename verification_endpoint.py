@@ -16,7 +16,7 @@ app.url_map.strict_slashes = False
         return False
 
     payload = content.get('payload')
-    sigature = content.get('sig')
+    signature = content.get('sig')
     platform = payload.get('platform')
     pk = payload.get('pk')
     message = payload.get('message')
