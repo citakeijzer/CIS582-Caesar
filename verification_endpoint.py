@@ -12,7 +12,7 @@ app.url_map.strict_slashes = False
 def verify():
     content = request.get_json(silent=True)
 
-    print(content)
+    print("Content: ", content)
     if content == None:
         return jsonify(False)
 
