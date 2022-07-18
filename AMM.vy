@@ -50,7 +50,7 @@ def tradeTokens(sell_token: address, sell_quantity: uint256):
 		self.tokenB.transferFrom(msg.sender, self, sell_quantity)
 		updated_b = self.tokenBQty + sell_quantity
 		updated_a = self.invariant / updated_b
-		quantity_a_to_send: uint256 = self.tokenBQty - updated_a
+		quantity_a_to_send: uint256 = self.tokenAQty - updated_a
 		self.tokenA.transfer(msg.sender, quantity_a_to_send)
 		self.tokenBQty = updated_b
 		self.tokenAQty = updated_a
@@ -59,8 +59,7 @@ def tradeTokens(sell_token: address, sell_quantity: uint256):
 @external
 def ownerWithdraw():
     assert self.owner == msg.sender
-    assert self.tokenAQty > 0
-    assert self.tokenA.totalSupply() > 0
+
     self.tokenA.transfer(self.owner, self.tokenAQty)
     self.tokenB.transfer(self.owner, self.tokenBQty)
     selfdestruct(self.owner)
