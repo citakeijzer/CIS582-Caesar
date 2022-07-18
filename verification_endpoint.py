@@ -22,7 +22,7 @@ def verify():
         eth_pk = acct.address
         eth_sk = acct.key
 
-        payload = "Sign this!"
+        payload = content.payload
 
         eth_encoded_msg = eth_account.messages.encode_defunct(text=payload)
         eth_sig_obj = eth_account.Account.sign_message(eth_encoded_msg,eth_sk)
@@ -40,6 +40,8 @@ def verify():
         if algosdk.util.verify_bytes(payload.encode('utf-8'),algo_sig_str,algo_pk):
             print( "Algo sig verifies!" )
             result = True
+    else:
+        result = False
 
     
     return jsonify(result)
