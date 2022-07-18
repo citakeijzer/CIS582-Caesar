@@ -9,7 +9,7 @@ api = Api(app)
 app.url_map.strict_slashes = False
 
 @app.route('/verify', methods=['GET','POST'])
-    content = request.get_json(silent=True)
+    content = request.get_json(silent=True, force=True)
 
     print("Content: ", content)
     if content == None:
