@@ -15,6 +15,8 @@ headers = {
 acl = algod.AlgodClient(algod_token, algod_address, headers)
 min_balance = 100000 #https://developer.algorand.org/docs/features/accounts/#minimum-balance
 
+
+
 def send_tokens( receiver_pk, tx_amount ):
     params = acl.suggested_params()
     gen_hash = params.gh
@@ -24,7 +26,8 @@ def send_tokens( receiver_pk, tx_amount ):
 
     #Your code here
     unsigned_txn = transaction.PaymentTxn(
-      address, tx_fee, 
+      address, 
+      tx_fee, 
       first_valid_round, 
       last_valid_round, 
       gen_hash, 
