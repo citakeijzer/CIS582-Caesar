@@ -5,7 +5,12 @@ from algosdk import mnemonic
 from algosdk import transaction
 
 from algosdk import account, encoding
-      
+
+private_key, address = account.generate_account()
+print("Private key:", private_key)
+print("Public key:", public_key)
+
+print("Address:", address)
       
 #Connect to Algorand node maintained by PureStake
 algod_address = "https://testnet-algorand.api.purestake.io/ps2"
