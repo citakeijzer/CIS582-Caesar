@@ -4,6 +4,24 @@ from algosdk.v2client import algod
 from algosdk import mnemonic
 from algosdk import transaction
 
+from algosdk import account, encoding
+
+# generate an account
+private_key, address = account.generate_account()
+print("Private key:", private_key)
+print("Address:", address)
+
+# check if the address is valid
+if encoding.is_valid_address(address):
+    print("The address is valid!")
+else:
+    print("The address is invalid.")
+      
+print("Base64 Private Key: {}\nPublic Algorand Address: {}\n".format(private_key, public_address))
+mnemonic_secret = mnemonic.from_private_key(private_key)
+print("mnemonic_secret = \"{}\"".format(mnemonic_secret))
+      
+      
 #Connect to Algorand node maintained by PureStake
 algod_address = "https://testnet-algorand.api.purestake.io/ps2"
 algod_token = "B3SU4KcVKi94Jap2VXkK83xx38bsv95K5UZm2lab"
@@ -14,11 +32,6 @@ headers = {
 
 acl = algod.AlgodClient(algod_token, algod_address, headers)
 min_balance = 100000 #https://developer.algorand.org/docs/features/accounts/#minimum-balance
-
-private_key, address = account.generate_account()
-print("Base64 Private Key: {}\nPublic Algorand Address: {}\n".format(private_key, public_address))
-mnemonic_secret = mnemonic.from_private_key(private_key)
-print("mnemonic_secret = \"{}\"".format(mnemonic_secret))
 
 def send_tokens( receiver_pk, tx_amount ):
     params = acl.suggested_params()
