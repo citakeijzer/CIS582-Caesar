@@ -15,7 +15,10 @@ headers = {
 acl = algod.AlgodClient(algod_token, algod_address, headers)
 min_balance = 100000 #https://developer.algorand.org/docs/features/accounts/#minimum-balance
 
-
+private_key, address = account.generate_account()
+print("Base64 Private Key: {}\nPublic Algorand Address: {}\n".format(private_key, public_address))
+mnemonic_secret = mnemonic.from_private_key(private_key)
+print("mnemonic_secret = \"{}\"".format(mnemonic_secret))
 
 def send_tokens( receiver_pk, tx_amount ):
     params = acl.suggested_params()
