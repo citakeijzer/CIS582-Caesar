@@ -6,12 +6,6 @@ from algosdk import transaction
 
 from algosdk import account, encoding
 
-private_key, address = account.generate_account()
-print("Private key:", private_key)
-print("Public key:", public_key)
-
-print("Address:", address)
-      
 #Connect to Algorand node maintained by PureStake
 algod_address = "https://testnet-algorand.api.purestake.io/ps2"
 algod_token = "B3SU4KcVKi94Jap2VXkK83xx38bsv95K5UZm2lab"
@@ -34,13 +28,13 @@ def send_tokens( receiver_pk, tx_amount ):
     last_valid_round = params.last
 
     #Your code here
-    sender_pk = pk
-    params.fee = tx_amount
-    receiver = receiver_pk
-    unsigned_txn = PaymentTxn(sender_pk, params, receiver_pk, tx_amount)
-    signed_txn = unsigned_txn.sign(mnemonic.to_private_key(mnemonic1))
+    unsigned_txn = transaction.PaymentTxn(address, tx_fee, first_valid_round, last_valid_round, gen_hash, receiver_pk, tx_amount, close_remainder_to=None, note=None, gen=None, flat_fee=False, lease=None, rekey_to=None)
+    # sign transaction
+    signed_txn = unsigned_txn.sign(private_key)
+    # send transaction
     txid = acl.send_transaction(signed_txn)
-    print("Successfully sent transaction with txID: {}".format(txid))
+    # print("Send transaction with txID: {}".format(txid))
+    sender_pk=address
     
     return sender_pk, txid
 
