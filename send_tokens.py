@@ -30,11 +30,12 @@ def send_tokens( receiver_pk, tx_amount ):
       gen_hash, 
       receiver_pk, 
       tx_amount, 
-      close_remainder_to=None, 
-      note=None, gen=None, 
-      flat_fee=False, 
-      lease=None, 
-      rekey_to=None
+      close_remainder_to = None, 
+      note = None, 
+      gen = None, 
+      flat_fee = False, 
+      lease = None, 
+      rekey_to = None
     )
 
     signed_txn = unsigned_txn.sign(private_key)
