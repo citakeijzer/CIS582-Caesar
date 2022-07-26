@@ -38,7 +38,7 @@ def process_order(order):
             sub_order['sell_currency'] = firstmatch.sell_currency
             sub_order_obj = Order(**{f:sub_order[f] for f in fields})
             sub_order_obj.created_by = neworder.id
-            session.add_all([sub_order_obj, firstmatch, neworder])
+            session.add_all([firstmatch, neworder, sub_order_obj])
             session.commit()
             session.refresh(sub_order_obj)
             neworder = sub_order_obj
@@ -52,7 +52,7 @@ def process_order(order):
             sub_order['sell_currency'] = neworder.sell_currency
             sub_order_obj = Order(**{f:sub_order[f] for f in fields})
             sub_order_obj.created_by = neworder.id
-            session.add_all([sub_order_obj, firstmatch, neworder])
+            session.add_all([firstmatch, neworder, sub_order_obj])
             session.commit()
             session.refresh(sub_order_obj)
             neworder = sub_order_obj
