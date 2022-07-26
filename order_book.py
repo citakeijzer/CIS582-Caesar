@@ -36,9 +36,8 @@ def process_order(order):
             sub_order['buy_amount'] = ((firstmatch.sell_amount - neworder.buy_amount) / firstmatch.sell_amount) * firstmatch.buy_amount
             sub_order['sender_pk'] = firstmatch.sender_pk
             sub_order['receiver_pk'] = firstmatch.receiver_pk
-            sub_order_obj = Order(**{f:sub_order[f] for f in fields})
-            sub_order_obj.creator_id = firstmatch.id
-            process_order(sub_order_obj)
+            sub_order['creator_id'] = neworder.id
+            process_order(sub_order)
         elif firstmatch.sell_amount < neworder.buy_amount:
             sub_order = {}
             sub_order['buy_currency'] = neworder.buy_currency
@@ -47,8 +46,7 @@ def process_order(order):
             sub_order['sell_amount'] = ((neworder.buy_amount - firstmatch.sell_amount) / neworder.buy_amount) * neworder.sell_amount
             sub_order['sender_pk'] = neworder.sender_pk
             sub_order['receiver_pk'] = neworder.receiver_pk
-            sub_order_obj = Order(**{f:sub_order[f] for f in fields})
-            sub_order_obj.creator_id = neworder.id
-            process_order(sub_order_obj)
+            sub_order['creator_id'] = neworder.id
+            process_order(sub_order)
         else:
             break
