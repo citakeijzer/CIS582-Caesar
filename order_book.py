@@ -21,7 +21,7 @@ def process_order(order):
         filter(Order.buy_currency == neworder.sell_currency).\
         filter(Order.filled == None)
     if matchedorders.count() == 0:
-        break
+        return
     firstmatch = matchedorders.first()
     firstmatch.filled = datetime.now()
     firstmatch.counterparty_id = neworder.id
@@ -48,8 +48,7 @@ def process_order(order):
         suborder['buy_amount'] = (firstmatch.sell_amount - neworder.buy_amount)  * (firstmatch.buy_amount / firstmatch.sell_amount)
         suborder['creator_id'] = firstmatch.id
         process_order(suborder)
-    else:
-        break
+    return
 
 
 
