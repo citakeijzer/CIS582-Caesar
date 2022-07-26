@@ -3,78 +3,64 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
 from models import Base, Order
-
-import random
 engine = create_engine('sqlite:///orders.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 def process_order(order):
-    #Your code here
-    newOrder["counterparty_id"] = None
-    newOrder["filled"] = None
-    
-    order_obj = Order(buy_currency = newOrder['buy_currency'], sell_currency = newOrder['sell_currency'], buy_amount = newOrder['buy_amount'], sell_amount = newOrder['sell_amount'], sender_pk = newOrder['sender_pk'], receiver_pk = newOrder['receiver_pk'] )
-
+    # insert order
+    fields = ['sender_pk','receiver_pk','buy_currency','sell_currency','buy_amount','sell_amount']
+    order_obj = Order(**{f:order[f] for f in fields})
     session.add(order_obj)
     session.commit()
     session.refresh(order_obj)
-    
-    pending_order = order_obj
-    
+    # print('inserted object id = ', order_obj.id)
+    order_try_to_fill = order_obj
     while True:
-        #filter out unfilled orders, check currency and amount
-        matching_orders = session.query(Order).filter(Order.filled == None).\
-        filter(Order.sell_currency == order_try_to_fill.buy_currency).\
-        filter(Order.buy_currency == order_try_to_fill.sell_currency).\
-        filter(Order.sell_amount * order_try_to_fill.sell_amount >= Order.buy_amount * order_try_to_fill.buy_amount)
-        #if no matching order, quit
-        if matching_orders.count() == 0:
+        # q_dump = session.query(Order)
+        # print('DUMP:')
+        # for temp in q_dump.all():
+        #     print(temp.__dict__)
+        q = session.query(Order).filter(Order.filled == None).\
+            filter(Order.sell_currency == order_try_to_fill.buy_currency).\
+            filter(Order.buy_currency == order_try_to_fill.sell_currency).\
+            filter(Order.sell_amount * order_try_to_fill.sell_amount >= Order.buy_amount * order_try_to_fill.buy_amount)
+        if q.count() == 0:
             break
-        #use first order for matching
-        matched_order = matching_orders.first()
-        #record counterparty info
-        matched_order.counterparty_id = pending_order.id
-        matched_order.filled = datetime.now()
-        pending_order.counterparty_id = matched_order.id
-        pending_order.filled = datetime.now()
-        
-        if matched_order.sell_amount < pending_order.buy_amount:
-            suborder = {}
-            suborder['sender_pk'] = pending_order.sender_pk
-            suborder['receiver_pk'] = pending_order.receiver_pk
-            
-            suborder['buy_currency'] = pending_order.buy_currency
-            suborder['sell_currency'] = pending_order.sell_currency
-
-            suborder['buy_amount'] = pending_order.buy_amount - matched_order.sell_amount
-            suborder['sell_amount'] = ((pending_order.buy_amount - matched_order.sell_amount) / pending_order.buy_amount) * pending_order.sell_amount
-
-            suborder_obj = Order(**{f:suborder[f] for f in fields})
-            suborder_obj.creator_id = pending_order.id
-            session.add_all([matched_order, pending_order, suborder_obj])
+        found_order = q.first()
+        # print('found one matched order:', found_order.__dict__)
+        found_order.filled = datetime.now()
+        order_try_to_fill.filled = datetime.now()
+        found_order.counterparty_id = order_try_to_fill.id
+        order_try_to_fill.counterparty_id = found_order.id
+        if found_order.sell_amount > order_try_to_fill.buy_amount:
+            child_order = {}
+            child_order['buy_currency'] = found_order.buy_currency
+            child_order['sell_currency'] = found_order.sell_currency
+            child_order['sell_amount'] = found_order.sell_amount - order_try_to_fill.buy_amount
+            child_order['buy_amount'] = ((found_order.sell_amount - order_try_to_fill.buy_amount) / found_order.sell_amount) * found_order.buy_amount
+            child_order['sender_pk'] = found_order.sender_pk
+            child_order['receiver_pk'] = found_order.receiver_pk
+            child_order_obj = Order(**{f:child_order[f] for f in fields})
+            child_order_obj.creator_id = found_order.id
+            session.add_all([found_order, order_try_to_fill, child_order_obj])
             session.commit()
-            session.refresh(suborder_obj)
-            pending_order = suborder_obj
-            
-        elif matched_order.sell_amount > pending_order.buy_amount:
-            suborder = {}
-            suborder['sender_pk'] = matched_order.sender_pk
-            suborder['receiver_pk'] = matched_order.receiver_pk
-            
-            suborder['buy_currency'] = matched_order.buy_currency
-            suborder['sell_currency'] = matched_order.sell_currency
-            
-            suborder['sell_amount'] = matched_order.sell_amount - pending_order.buy_amount
-            suborder['buy_amount'] = ((matched_order.sell_amount - pending_order.buy_amount) / matched_order.sell_amount) * matched_order.buy_amount
-
-            suborder_obj = Order(**{f:suborder[f] for f in fields})
-            suborder_obj.creator_id = matched_order.id
-            session.add_all([matched_order, pending_order, suborder_obj])
+            session.refresh(child_order_obj)
+            order_try_to_fill = child_order_obj
+        elif found_order.sell_amount < order_try_to_fill.buy_amount:
+            child_order = {}
+            child_order['buy_currency'] = order_try_to_fill.buy_currency
+            child_order['sell_currency'] = order_try_to_fill.sell_currency
+            child_order['buy_amount'] = order_try_to_fill.buy_amount - found_order.sell_amount
+            child_order['sell_amount'] = ((order_try_to_fill.buy_amount - found_order.sell_amount) / order_try_to_fill.buy_amount) * order_try_to_fill.sell_amount
+            child_order['sender_pk'] = order_try_to_fill.sender_pk
+            child_order['receiver_pk'] = order_try_to_fill.receiver_pk
+            child_order_obj = Order(**{f:child_order[f] for f in fields})
+            child_order_obj.creator_id = order_try_to_fill.id
+            session.add_all([found_order, order_try_to_fill, child_order_obj])
             session.commit()
-            session.refresh(suborder_obj)
-            pending_order = suborder_obj
-
+            session.refresh(child_order_obj)
+            order_try_to_fill = child_order_obj
         else:
             break
