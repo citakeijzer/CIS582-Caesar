@@ -37,7 +37,7 @@ def process_order(order):
             sub_order['sell_amount'] = firstmatch.sell_amount - neworder.buy_amount
             sub_order['buy_amount'] = (firstmatch.sell_amount - neworder.buy_amount) * (firstmatch.buy_amount / firstmatch.sell_amount)
             sub_order_obj = Order(**{f:sub_order[f] for f in fields})
-            sub_order_obj.created_by = neworder.id
+            sub_order_obj.created_by = firstmatch.id
             session.add_all([firstmatch, neworder, sub_order_obj])
             session.commit()
             session.refresh(sub_order_obj)
