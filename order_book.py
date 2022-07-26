@@ -36,12 +36,12 @@ def process_order(order):
             sub_order['buy_amount'] = (firstmatch.sell_amount - neworder.buy_amount) * (firstmatch.buy_amount / firstmatch.sell_amount)
             sub_order['buy_currency'] = firstmatch.buy_currency
             sub_order['sell_currency'] = firstmatch.sell_currency
-            suborder_obj = Order(**{f:suborder[f] for f in fields})
-            suborder_obj.created_by = neworder.id
-            session.add_all([suborder_obj, firstmatch, neworder])
+            sub_order_obj = Order(**{f:sub_order[f] for f in fields})
+            sub_order_obj.created_by = neworder.id
+            session.add_all([sub_order_obj, firstmatch, neworder])
             session.commit()
-            session.refresh(suborder_obj)
-            neworder = suborder_obj
+            session.refresh(sub_order_obj)
+            neworder = sub_order_obj
         elif firstmatch.sell_amount < neworder.buy_amount:
             sub_order = {}
             sub_order['sender_pk'] = neworder.sender_pk
@@ -50,11 +50,11 @@ def process_order(order):
             sub_order['sell_amount'] = (neworder.buy_amount - firstmatch.sell_amount) * (neworder.sell_amount / neworder.buy_amount) 
             sub_order['buy_currency'] = neworder.buy_currency
             sub_order['sell_currency'] = neworder.sell_currency
-            suborder_obj = Order(**{f:suborder[f] for f in fields})
-            suborder_obj.created_by = neworder.id
-            session.add_all([suborder_obj, firstmatch, neworder])
+            sub_order_obj = Order(**{f:sub_order[f] for f in fields})
+            sub_order_obj.created_by = neworder.id
+            session.add_all([sub_order_obj, firstmatch, neworder])
             session.commit()
-            session.refresh(suborder_obj)
-            neworder = suborder_obj
+            session.refresh(sub_order_obj)
+            neworder = sub_order_obj
         else:
             break
