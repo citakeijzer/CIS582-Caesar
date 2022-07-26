@@ -3,6 +3,8 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
 from models import Base, Order
+
+import random
 engine = create_engine('sqlite:///orders.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
