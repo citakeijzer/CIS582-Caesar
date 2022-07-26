@@ -18,13 +18,10 @@ headers = {
 acl = algod.AlgodClient(algod_token, algod_address, headers)
 min_balance = 100000 #https://developer.algorand.org/docs/features/accounts/#minimum-balance
 
-mnemonic1 = "daughter coin decorate junior shift much soft pottery change chase they family culture program salute stool angry chapter cake congress sugar castle inject above stable"
-sk = mnemonic.to_private_key(mnemonic1)
-pk = mnemonic.to_public_key(mnemonic1)
-#print("My address: {}".format(pk))
-account_info = acl.account_info(pk)
-#print(json.dumps(account_info, indent=4))
-#print("Account balance: {} microAlgos".format(account_info.get('amount')))
+
+address="7PGDWW3H2L5SCKR2DBJBEC3QYIVDOWYXYPCZLZ24246M5ZEY46ARQZ5WVU"
+private_key="Pspk7L8vpAv/5qXUlzdnKt001R2x9rrk0MZNr3WB7lD7zDtbZ9L7ISo6GFISC3DCKjdbF8PFledc1zzO5JjngQ=="
+
 
 def send_tokens( receiver_pk, tx_amount ):
     params = acl.suggested_params()
@@ -34,14 +31,10 @@ def send_tokens( receiver_pk, tx_amount ):
     last_valid_round = params.last
 
     #Your code here
-    sender_pk = pk
-    params.fee = tx_amount
-    receiver = receiver_pk
-    unsigned_txn = PaymentTxn(sender_pk, params, receiver_pk, tx_amount)
-    signed_txn = unsigned_txn.sign(mnemonic.to_private_key(mnemonic1))
+    unsigned_txn = transaction.PaymentTxn(address, tx_fee, first_valid_round, last_valid_round, gen_hash, receiver_pk, tx_amount, close_remainder_to=None, note=None, gen=None, flat_fee=False, lease=None, rekey_to=None)
+    signed_txn = unsigned_txn.sign(private_key)
     txid = acl.send_transaction(signed_txn)
-    print("Successfully sent transaction with txID: {}".format(txid))
-    
+    sender_pk=address
     
     return sender_pk, txid
 
