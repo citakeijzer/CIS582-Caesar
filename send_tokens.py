@@ -21,8 +21,8 @@ min_balance = 100000 #https://developer.algorand.org/docs/features/accounts/#min
 private_key, public_address = account.generate_account()
 print("Base64 Private Key: {}\nPublic Algorand Address: {}\n".format(private_key, public_address))
 
-address="5KQHYWTFVZH3HA7VS6FK6AFMGCXNNT7YIEVRLYBCYJHOGIZHMV5EWSG4RU"
-private_key="xxpCSbUntUAc0JX0K0hOmxuqUnkVWJJU4vQAYuA+NivqoHxaZa5Ps4P1l4qvAKwwrtbP+EErFeAiwk7jIydleg=="
+pk="5KQHYWTFVZH3HA7VS6FK6AFMGCXNNT7YIEVRLYBCYJHOGIZHMV5EWSG4RU"
+sk="xxpCSbUntUAc0JX0K0hOmxuqUnkVWJJU4vQAYuA+NivqoHxaZa5Ps4P1l4qvAKwwrtbP+EErFeAiwk7jIydleg=="
 
 
 def send_tokens( receiver_pk, tx_amount ):
@@ -33,11 +33,11 @@ def send_tokens( receiver_pk, tx_amount ):
     last_valid_round = params.last
 
     #Your code here
-    unsigned_txn = transaction.PaymentTxn(address, params, receiver_pk, tx_amount)
-    signed_txn = unsigned_txn.sign(private_key)
-    txid = acl.send_transaction(signed_txn)
-    print("Successfully sent transaction with txID: {}".format(txid))    
-    return sender_pk, txid
+    tx = transaction.PaymentTxn(pk, tx_fee, first_valid_round, last_valid_round, gen_hash, receiver_pk, tx_amount)
+    tx = tx.sign(sk)
+    tx_id = acl.send_transaction(tx)
+    sender_pk = pk 
+    return sender_pk, tx_id
 
 # Function from Algorand Inc.
 def wait_for_confirmation(client, txid):
