@@ -3,8 +3,9 @@
 from algosdk.v2client import algod
 from algosdk import mnemonic
 from algosdk import transaction
-
-from algosdk import account, encoding
+from algosdk import account
+from algosdk.future.transaction import PaymentTxn
+import json
 
 #Connect to Algorand node maintained by PureStake
 algod_address = "https://testnet-algorand.api.purestake.io/ps2"
