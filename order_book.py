@@ -19,26 +19,25 @@ def process_order(order):
         neworder.filled = datetime.now()
         neworder.counterparty_id = firstmatch.id
         if firstmatch.sell_amount > neworder.buy_amount:
-            suborder = {}
-            suborder['sender_pk'] = firstmatch.sender_pk
-            suborder['receiver_pk'] = firstmatch.receiver_pk
-            suborder['sell_amount'] = firstmatch.sell_amount - neworder.buy_amount
-            suborder['buy_amount'] = ((firstmatch.sell_amount - neworder.buy_amount) * (firstmatch.buy_amount / firstmatch.sell_amount)
-		    #remaining order amount * unit price
-            suborder['buy_currency'] = firstmatch.buy_currency
-            suborder['sell_currency'] = firstmatch.sell_currency
-            suborder['created_by'] = firstmatch.id
-            process_order(suborder)
+            subOrder = {}
+            subOrder['sender_pk'] = firstmatch.sender_pk
+            subOrder['receiver_pk'] = firstmatch.receiver_pk
+            subOrder['sell_amount'] = firstmatch.sell_amount - neworder.buy_amount
+            subOrder['buy_amount'] = ((firstmatch.sell_amount - neworder.buy_amount) * (firstmatch.buy_amount / firstmatch.sell_amount)
+            subOrder['buy_currency'] = firstmatch.buy_currency
+            subOrder['sell_currency'] = firstmatch.sell_currency
+            subOrder['created_by'] = firstmatch.id
+            process_order(subOrder)
         elif firstmatch.sell_amount < neworder.buy_amount:
-            suborder = {}
-            suborder['buy_currency'] = neworder.buy_currency
-            suborder['sell_currency'] = neworder.sell_currency
-            suborder['buy_amount'] = neworder.buy_amount - firstmatch.sell_amount
-            suborder['sell_amount'] = ((neworder.buy_amount - firstmatch.sell_amount) * (neworder.sell_amount / neworder.buy_amount)
-            suborder['sender_pk'] = neworder.sender_pk
-            suborder['receiver_pk'] = neworder.receiver_pk
-            suborder['created_by'] = firstmatch.id
-            process_order(suborder)
+            subOrder = {}
+            subOrder['buy_currency'] = neworder.buy_currency
+            subOrder['sell_currency'] = neworder.sell_currency
+            subOrder['buy_amount'] = neworder.buy_amount - firstmatch.sell_amount
+            subOrder['sell_amount'] = ((neworder.buy_amount - firstmatch.sell_amount) * (neworder.sell_amount / neworder.buy_amount)
+            subOrder['sender_pk'] = neworder.sender_pk
+            subOrder['receiver_pk'] = neworder.receiver_pk
+            subOrder['created_by'] = firstmatch.id
+            process_order(subOrder)
         else:
             break
 
