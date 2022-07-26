@@ -22,12 +22,10 @@ def process_order(order):
     pending_order = order_obj
     
     while True:
-            #filter out unfilled orders
-            matching_orders = session.query(Order).filter(Order.filled == None).\
-            #check for matching currency (buy vs sell)
+        #filter out unfilled orders
+        matching_orders = session.query(Order).filter(Order.filled == None).\
             filter(Order.sell_currency == pending_order.buy_currency).\
             filter(Order.buy_currency == pending_order.sell_currency).\
-            #check for amount
             filter(Order.sell_amount * pending_order.sell_amount >= Order.buy_amount * pending_order.buy_amount)
         #if no matching order, quit
         if matching_orders.count() == 0:
