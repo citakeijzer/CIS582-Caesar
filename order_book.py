@@ -32,10 +32,10 @@ def process_order(order):
             sub_order = {}
             sub_order['sender_pk'] = firstmatch.sender_pk
             sub_order['receiver_pk'] = firstmatch.receiver_pk
-            sub_order['sell_amount'] = firstmatch.sell_amount - neworder.buy_amount
-            sub_order['buy_amount'] = (firstmatch.sell_amount - neworder.buy_amount) * (firstmatch.buy_amount / firstmatch.sell_amount)
             sub_order['buy_currency'] = firstmatch.buy_currency
             sub_order['sell_currency'] = firstmatch.sell_currency
+            sub_order['sell_amount'] = firstmatch.sell_amount - neworder.buy_amount
+            sub_order['buy_amount'] = (firstmatch.sell_amount - neworder.buy_amount) * (firstmatch.buy_amount / firstmatch.sell_amount)
             sub_order_obj = Order(**{f:sub_order[f] for f in fields})
             sub_order_obj.created_by = neworder.id
             session.add_all([firstmatch, neworder, sub_order_obj])
@@ -46,10 +46,10 @@ def process_order(order):
             sub_order = {}
             sub_order['sender_pk'] = neworder.sender_pk
             sub_order['receiver_pk'] = neworder.receiver_pk
-            sub_order['buy_amount'] = neworder.buy_amount - firstmatch.sell_amount
-            sub_order['sell_amount'] = (neworder.buy_amount - firstmatch.sell_amount) * (neworder.sell_amount / neworder.buy_amount) 
             sub_order['buy_currency'] = neworder.buy_currency
             sub_order['sell_currency'] = neworder.sell_currency
+            sub_order['buy_amount'] = neworder.buy_amount - firstmatch.sell_amount
+            sub_order['sell_amount'] = (neworder.buy_amount - firstmatch.sell_amount) * (neworder.sell_amount / neworder.buy_amount) 
             sub_order_obj = Order(**{f:sub_order[f] for f in fields})
             sub_order_obj.created_by = neworder.id
             session.add_all([firstmatch, neworder, sub_order_obj])
