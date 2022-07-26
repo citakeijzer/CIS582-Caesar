@@ -40,7 +40,7 @@ def process_order(order):
             sub_order_obj.creator_id = firstmatch.id
             session.add_all([firstmatch, neworder, sub_order_obj])
             session.commit()
-            session.refresh(sub_order_obg)
+            session.refresh(sub_order_obj)
             neworder = sub_order_obj
         elif firstmatch.sell_amount < neworder.buy_amount:
             sub_order = {}
