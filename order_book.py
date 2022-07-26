@@ -33,7 +33,7 @@ def process_order(order):
             sub_order['sender_pk'] = firstmatch.sender_pk
             sub_order['receiver_pk'] = firstmatch.receiver_pk
             sub_order['sell_amount'] = firstmatch.sell_amount - neworder.buy_amount
-            sub_order['buy_amount'] = (firstmatch.sell_amount - neworder.buy_amount) * (firstmatch.buy_amount / firstmatch.sell_amount))
+            sub_order['buy_amount'] = (firstmatch.sell_amount - neworder.buy_amount) * (firstmatch.buy_amount / firstmatch.sell_amount)
             sub_order['buy_currency'] = firstmatch.buy_currency
             sub_order['sell_currency'] = firstmatch.sell_currency
             suborder_obj = Order(**{f:suborder[f] for f in fields})
