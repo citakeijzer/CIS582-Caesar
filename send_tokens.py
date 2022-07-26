@@ -18,6 +18,8 @@ headers = {
 acl = algod.AlgodClient(algod_token, algod_address, headers)
 min_balance = 100000 #https://developer.algorand.org/docs/features/accounts/#minimum-balance
 
+private_key, public_address = account.generate_account()
+print("Base64 Private Key: {}\nPublic Algorand Address: {}\n".format(private_key, public_address))
 
 address="7PGDWW3H2L5SCKR2DBJBEC3QYIVDOWYXYPCZLZ24246M5ZEY46ARQZ5WVU"
 private_key="Pspk7L8vpAv/5qXUlzdnKt001R2x9rrk0MZNr3WB7lD7zDtbZ9L7ISo6GFISC3DCKjdbF8PFledc1zzO5JjngQ=="
