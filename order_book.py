@@ -28,11 +28,9 @@ def process_order(order):
         firstmatch.counterparty_id = neworder.id
         neworder.filled = datetime.now()
         neworder.counterparty_id = firstmatch.id
-        if firstmatch.sell_amount != neworder.buy_amount:
-            break
-        else:
-            suborder = {}
+
         if firstmatch.sell_amount < neworder.buy_amount:
+            suborder = {}
             suborder['sender_pk'] = neworder.sender_pk
             suborder['receiver_pk'] = neworder.receiver_pk
             suborder['buy_currency'] = neworder.buy_currency
@@ -46,6 +44,7 @@ def process_order(order):
             session.refresh(suborder_obj)
             neworder = suborder_obj
         elif firstmatch.sell_amount > neworder.buy_amount:
+            suborder = {}
             suborder['sender_pk'] = firstmatch.sender_pk
             suborder['receiver_pk'] = firstmatch.receiver_pk
             suborder['buy_currency'] = firstmatch.buy_currency
