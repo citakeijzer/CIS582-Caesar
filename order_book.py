@@ -24,13 +24,13 @@ def process_order(order):
     pending_order = order_obj
     
     while True:
-            #filter out unfilled orders
-            matching_orders = session.query(Order).filter(Order.filled == None).\
-            #check for matching currency (buy vs sell)
-            filter(Order.sell_currency == order_try_to_fill.buy_currency).\
-            filter(Order.buy_currency == order_try_to_fill.sell_currency).\
-            #check for amount
-            filter(Order.sell_amount * order_try_to_fill.sell_amount >= Order.buy_amount * order_try_to_fill.buy_amount)
+        #filter out unfilled orders
+        matching_orders = session.query(Order).filter(Order.filled == None).\
+        #check for matching currency (buy vs sell)
+        filter(Order.sell_currency == order_try_to_fill.buy_currency).\
+        filter(Order.buy_currency == order_try_to_fill.sell_currency).\
+        #check for amount
+        filter(Order.sell_amount * order_try_to_fill.sell_amount >= Order.buy_amount * order_try_to_fill.buy_amount)
         #if no matching order, quit
         if matching_orders.count() == 0:
             break
