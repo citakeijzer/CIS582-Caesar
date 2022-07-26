@@ -18,6 +18,7 @@ acl = algod.AlgodClient(algod_token, algod_address, headers)
 min_balance = 100000 #https://developer.algorand.org/docs/features/accounts/#minimum-balance
 
 address="7PGDWW3H2L5SCKR2DBJBEC3QYIVDOWYXYPCZLZ24246M5ZEY46ARQZ5WVU"
+
 private_key="Pspk7L8vpAv/5qXUlzdnKt001R2x9rrk0MZNr3WB7lD7zDtbZ9L7ISo6GFISC3DCKjdbF8PFledc1zzO5JjngQ=="
 
 def send_tokens( receiver_pk, tx_amount ):
@@ -28,13 +29,17 @@ def send_tokens( receiver_pk, tx_amount ):
     last_valid_round = params.last
 
     #Your code here
-    unsigned_txn = transaction.PaymentTxn(address, tx_fee, first_valid_round, last_valid_round, gen_hash, receiver_pk, tx_amount, close_remainder_to=None, note=None, gen=None, flat_fee=False, lease=None, rekey_to=None)
-    # sign transaction
+    sender_pk = address
+    
+    unsigned_txn = transaction.PaymentTxn(address, tx_fee, first_valid_round, last_valid_round, gen_hash, receiver_pk, tx_amount)
+
     signed_txn = unsigned_txn.sign(private_key)
-    # send transaction
+    
     txid = acl.send_transaction(signed_txn)
-    # print("Send transaction with txID: {}".format(txid))
-    sender_pk=address
+   
+    print("Send transaction with txID: {}".format(txid))
+      
+
     
     return sender_pk, txid
 
