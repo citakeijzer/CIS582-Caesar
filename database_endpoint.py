@@ -118,7 +118,7 @@ def order_book():
                     'receiver_pk': order.receiver_pk,
                     'sender_pk': order.sender_pk,
                     'buy_amount': order.buy_amount,
-                    'sell_amount': order.sell_amount
+                    'sell_amount': order.sell_amount,
                     'buy_currency': order.buy_currency,
                     'sell_currency': order.sell_currency} ]
                  }
