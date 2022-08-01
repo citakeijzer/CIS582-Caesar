@@ -108,17 +108,11 @@ def order_book():
     
     orders = g.session.query(Order)
     
+    result = {"data": []}
+
     for order in orders:
-        result = {'data':
-                  [{'signature': order.signature,
-                    'receiver_pk': order.receiver_pk,
-                    'sender_pk': order.sender_pk,
-                    'buy_amount': order.buy_amount,
-                    'sell_amount': order.sell_amount,
-                    'buy_currency': order.buy_currency,
-                    'sell_currency': order.sell_currency} ]
-                 }
-                                                              
+        result['data'].append({'sender_pk': order.sender_pk,'receiver_pk': order.receiver_pk, 'buy_currency': order.buy_currency, 'sell_currency': order.sell_currency, 'buy_amount': order.buy_amount, 'sell_amount': order.sell_amount,'signature': order.signature})
+                           
     return jsonify(result)
 
 if __name__ == '__main__':
