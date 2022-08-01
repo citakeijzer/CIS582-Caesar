@@ -74,17 +74,16 @@ def trade():
         platform = payload['platform']
         pk = payload['sender_pk']
         sig = content["sig"]
-        #payload_text = json.dumps(payload)
 
         if platform == 'Ethereum':
-            feedback_pk = eth_account.Account.recover_message(eth_account.messages.encode_defunct(text = json.dumps(content['payload']), signature = sig)
+            feedback_pk = eth_account.Account.recover_message(eth_account.messages.encode_defunct(text = json.dumps(payload), signature = sig)
             if pk == feedback_pk:
                 verifier = True
             else:
                print("Failed to verify - Eth")
                                                               
         elif platform == 'Algorand':
-            if algosdk.util.verify_bytes(json.dumps(content['payload']).encode('utf-8'),sig, pk):
+            if algosdk.util.verify_bytes(json.dumps(payload).encode('utf-8'),sig, pk):
                 verifier = True
             else:
                print("Failed to verify - Algorand")
@@ -92,15 +91,15 @@ def trade():
             print("Error: ", platform)
             print( json.dumps(content) )
             log_message(content)
-            #return jsonify( False )
+            return jsonify( False )
         
         if verifier == True: 
             add_order = Order(signature = sig, receiver_pk = payload['receiver_pk'], sender_pk = pk, buy_amount = payload['buy_amount'], sell_amount = payload['sell_amount'], buy_currency = payload['buy_currency'], sell_currency = payload['sell_currency'])
             g.session.add(add_order)
             g.session.commit()
-            #return jsonify(True)
+            return jsonify(True)
         else:
-            log_message(payload)
+            log_message(content)
                                                               
         return jsonify(verifier) 
                                                               
