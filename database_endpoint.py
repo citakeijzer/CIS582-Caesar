@@ -91,14 +91,11 @@ def trade():
         else:
             print("Error: ", platform)
             print( json.dumps(content) )
-            log_message(content)
-            #return jsonify( False )
         
         if verifier == True: 
             add_order = Order(signature = sig, receiver_pk = payload['receiver_pk'], sender_pk = pk, buy_amount = payload['buy_amount'], sell_amount = payload['sell_amount'], buy_currency = payload['buy_currency'], sell_currency = payload['sell_currency'])
             g.session.add(add_order)
             g.session.commit()
-            #return jsonify(True)
         else:
             log_message(content)
                                                               
