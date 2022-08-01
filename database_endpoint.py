@@ -77,7 +77,7 @@ def trade():
 
         if platform == 'Ethereum':
             feedback_pk = eth_account.Account.recover_message(eth_account.messages.encode_defunct(text = json.dumps(payload), signature = sig)
-            if pk == feedback_pk:
+            if feedback_pk == pk:
                 verifier = True
             else:
                print("Failed to verify - Eth")
