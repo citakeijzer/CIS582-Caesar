@@ -77,11 +77,8 @@ def trade():
 
         if platform == 'Ethereum':
             msg_coded = eth_account.messages.encode_defunct(text = json.dumps(payload))
-
             pk_new = eth_account.Account.recover_message(msg_coded, signature = sig)
-
             if pk == pk_new:
-                
                 verifier = True
             else:
                print("Failed to verify - Eth")
@@ -95,13 +92,13 @@ def trade():
             print("Error: ", platform)
             print( json.dumps(content) )
             log_message(content)
-            return jsonify( False )
+            #return jsonify( False )
         
         if verifier == True: 
             add_order = Order(signature = sig, receiver_pk = payload['receiver_pk'], sender_pk = pk, buy_amount = payload['buy_amount'], sell_amount = payload['sell_amount'], buy_currency = payload['buy_currency'], sell_currency = payload['sell_currency'])
             g.session.add(add_order)
             g.session.commit()
-            return jsonify(True)
+            #return jsonify(True)
         else:
             log_message(content)
                                                               
@@ -111,7 +108,9 @@ def trade():
 def order_book():
     #Your code here
     #Note that you can access the database session using g.session
+    
     orders = g.session.query(Order)
+    
     for order in orders:
         result = {'data':
                   [{'signature': order.signature,
