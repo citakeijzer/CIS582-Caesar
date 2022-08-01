@@ -32,7 +32,11 @@ def shutdown_session(response_or_exc):
 
 def log_message(d)
     # Takes input dictionary d and writes it to the Log table
-    pass
+    payload = d['payload']
+    message=json.dumps(payload) #
+    new_log = Log(message) #
+    return new_log
+
 
 """
 ---------------- Endpoints ----------------
@@ -65,11 +69,58 @@ def trade():
             
         #Your code here
         #Note that you can access the database session using g.session
+        
+        verifier = False #
+        payload = content['payload']
+        platform = payload['platform']
+        pk = payload['sender_pk']
+        sig = content["sig"]
+        #payload_text = json.dumps(payload)
 
+        if platform == 'Ethereum':
+            feedback_pk = eth_account.Account.recover_message(eth_account.messages.encode_defunct(text = json.dumps(content['payload']), signature = sig)
+            if pk == feedback_pk:
+                verifier = True
+            else:
+               print("Failed to verify - Eth")
+                                                              
+        elif platform == 'Algorand':
+            if algosdk.util.verify_bytes(json.dumps(content['payload']).encode('utf-8'),sig, pk):
+                verifier = True
+            else:
+               print("Failed to verify - Algorand")
+        else:
+            print("Error: ", platform)
+            print( json.dumps(content) )
+            log_message(content)
+            #return jsonify( False )
+        
+        if verifier == True: 
+            add_order = Order(signature = sig, receiver_pk = payload['receiver_pk'], sender_pk = pk, buy_amount = payload['buy_amount'], sell_amount = payload['sell_amount'], buy_currency = payload['buy_currency'], sell_currency = payload['sell_currency'])
+            g.session.add(add_order)
+            g.session.commit()
+            #return jsonify(True)
+        else:
+            log_message(payload)
+                                                              
+        return jsonify(verifier) 
+                                                              
 @app.route('/order_book')
 def order_book():
     #Your code here
     #Note that you can access the database session using g.session
+    orders = g.session.query(Order)
+    for order in orders:
+        result = {'data':
+                  [{'signature': order.signature,
+                    'receiver_pk': order.receiver_pk,
+                    'sender_pk': order.sender_pk,
+                    'buy_amount': order.buy_amount,
+                    'sell_amount': order.sell_amount
+                    'buy_currency': order.buy_currency,
+                    'sell_currency': order.sell_currency} ]
+                 }
+                                                              
     return jsonify(result)
 
 if __name__ == '__main__':
