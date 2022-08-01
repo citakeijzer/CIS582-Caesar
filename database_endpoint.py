@@ -76,8 +76,12 @@ def trade():
         sig = content["sig"]
 
         if platform == 'Ethereum':
-            feedback_pk = eth_account.Account.recover_message(eth_account.messages.encode_defunct(text = json.dumps(payload), signature = sig)
-            if feedback_pk == pk:
+            msg_coded = eth_account.messages.encode_defunct(text = json.dumps(payload))
+
+            pk_new = eth_account.Account.recover_message(msg_coded, signature = sig)
+
+            if pk == pk_new:
+                
                 verifier = True
             else:
                print("Failed to verify - Eth")
