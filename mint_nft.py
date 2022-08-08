@@ -47,16 +47,6 @@ def deploy_nft(contract_file,name,symbol,minter_address):
 	#Return the contract object
 	return ERC721_contract
 
-def pin_to_ipfs(data):
-    assert isinstance(data, dict), f"Error pin_to_ipfs expects a dictionary"
-    files = {
-        'file': (json.dumps(data)),
-    }
-    response = requests.post('https://ipfs.infura.io:5001/api/v0/add', files=files)
-    pins = response.json()
-    return pins['Hash']
-
-
 def mint_nft(nft_contract,tokenId,metadata,owner_address,minter_address):
 	"""
 	nft_contract: a deployed contract
