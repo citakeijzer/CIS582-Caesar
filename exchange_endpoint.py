@@ -30,36 +30,10 @@ def shutdown_session(response_or_exc):
 
 
 """ Suggested helper methods """
-def recordData(order, data):
-    data.append({
-        'sender_pk': order.sender_pk,
-        'receiver_pk': order.receiver_pk,
-        'buy_currency': order.buy_currency,
-        'sell_currency': order.sell_currency,
-        'buy_amount': order.buy_amount,
-        'sell_amount': order.sell_amount,
-        'signature': order.signature
-    })
-
-def matchOrder(order):
-
-    g.session.add(order)
-    g.session.commit()
-    partya = filterOrder(order)
-
-    if (partya is not None):
-        nextaccount = executeOrder(order, partya)
-        if (nextaccount is not None):
-            matchOrder(nextaccount)
-
-    else:
-        return
-
 def filterOrder(new_order):
     partya = g.session.query(Order).filter(Order.filled == None, Order.sell_currency == new_order.buy_currency, Order.buy_currency == new_order.sell_currency,((Order.sell_amount / Order.buy_amount) >= (new_order.buy_amount / new_order.sell_amount)), Order.sell_amount != Order.buy_amount, new_order.buy_amount != new_order.sell_amount)
 
     return partya.first()
-
 
 def executeOrder(partyb, partya):
     partyb.filled = datetime.now()
@@ -98,11 +72,33 @@ def executeOrder(partyb, partya):
     else:
         g.session.commit()
 
-
+def recordData(order, data):
+    data.append({
+        'sender_pk': order.sender_pk,
+        'receiver_pk': order.receiver_pk,
+        'buy_currency': order.buy_currency,
+        'sell_currency': order.sell_currency,
+        'buy_amount': order.buy_amount,
+        'sell_amount': order.sell_amount,
+        'signature': order.signature
+    })
+    
 def log_message(d):
     g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
     g.session.commit()
+    
+def matchOrder(order):
 
+    g.session.add(order)
+    g.session.commit()
+    partya = filterOrder(order)
+
+    if (partya is not None):
+        nextaccount = executeOrder(order, partya)
+        if (nextaccount is not None):
+            matchOrder(nextaccount)
+    else:
+        return 
 """ End of helper methods """
 
 
