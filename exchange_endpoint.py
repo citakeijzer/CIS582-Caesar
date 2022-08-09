@@ -31,16 +31,65 @@ def shutdown_session(response_or_exc):
 
 """ Suggested helper methods """
 
-def check_sig(payload,sig):
-    pass
 
-def fill_order(order,txes=[]):
-    pass
-  
+	
+def ExecuteOrder(new_order):
+    partyb = g.session.query(Order).filter(Order.filled == None, Order.sell_currency == new_order.buy_currency, Order.buy_currency == new_order.sell_currency,((Order.sell_amount / Order.buy_amount) >= (new_order.buy_amount / new_order.sell_amount)), Order.sell_amount != Order.buy_amount, new_order.buy_amount != new_order.sell_amount)
+    return partyb.first()
+	
+def matchOrder(partya, partyb):
+    partya.counterparty_id = partyb.id
+	partyb.counterparty_id = partya.id
+	partya.filled = datetime.now()
+	partyb.filled = datetime.now()
+	if partya.buy_amount < partyb.sell_amount:
+        remaining = partyb.sell_amount - partya.buy_amount
+	    exchange = partyb.sell_amount / partyb.buy_amount
+        nextorder = Order(creator_id=partyb.id, sender_pk=partyb.sender_pk,
+                          receiver_pk=partyb.receiver_pk,
+	                      buy_currency=partyb.buy_currency,
+	                      sell_currency=partyb.sell_currency,
+	                      buy_amount= remaining / exchange, sell_amount=remaining)
+        g.session.add(nextorder)
+	    g.session.commit()
+    elif partya.buy_amount > partyb.sell_amount:
+        remaining = partya.buy_amount - partyb.sell_amount
+	    exchange = partya.buy_amount / partya.sell_amount
+        nextorder = Order(creator_id=partya.id, sender_pk=partya.sender_pk,
+                          receiver_pk=partya.receiver_pk,
+	                      buy_currency=partya.buy_currency,
+	                      sell_currency=partya.sell_currency, buy_amount=remaining,
+	                      sell_amount=remaining / exchange)
+	    g.session.add(nextorder)
+	    g.session.commit()
+	else:
+	    g.session.commit()
+	
 def log_message(d):
-    # Takes input dictionary d and writes it to the Log table
-    # Hint: use json.dumps or str() to get it in a nice string form
-    pass
+	    g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
+	    g.session.commit()
+
+def storeData(order, data):
+	    data.append({
+	        'sender_pk': order.sender_pk,
+	        'receiver_pk': order.receiver_pk,
+	        'buy_currency': order.buy_currency,
+	        'sell_currency': order.sell_currency,
+	        'buy_amount': order.buy_amount,
+	        'sell_amount': order.sell_amount,
+	        'signature': order.signature
+	    })
+def checkOrder(order):
+    g.session.add(order)
+    g.session.commit()
+	partyb = ExecuteOrder(order)
+    
+    if (partyb is not None):
+        next_account = matchOrder(order, partyb)
+        if (next_account is not None):
+            checkOrder(next_account)
+        else:
+            return
 
 """ End of helper methods """
 
@@ -69,23 +118,43 @@ def trade():
                 log_message(content)
                 return jsonify( False )
             
-        #Your code here
-        #Note that you can access the database session using g.session
+    signature = content['sig']
+    payload = json.dumps(content['payload'])
+    platform = content['payload']['platform']
+    sell_currency = content['payload']['sell_currency']
+    buy_currency = content['payload']['buy_currency']
+    receiver_public_key = content['payload']['receiver_pk']
+    sender_public_key = content['payload']['sender_pk']
+    sell_amount = content['payload']['sell_amount']
+    buy_amount = content['payload']['buy_amount']
 
-        # TODO: Check the signature
-        
-        # TODO: Add the order to the database
-        
-        # TODO: Fill the order
-        
-        # TODO: Be sure to return jsonify(True) or jsonify(False) depending on if the method was successful
+    # TODO: Check the signature
+    if platform == 'Ethereum':
+        ethermsg = eth_account.messages.encode_defunct(text=payload)
+        if eth_account.Account.recover_message(ethermsg, signature=signature) == sender_public_key:
+            checkOrder(Order(sender_pk=sender_public_key, receiver_pk=receiver_public_key,
+                             buy_currency=buy_currency, sell_currency=sell_currency, buy_amount=buy_amount,
+                             sell_amount=sell_amount, signature=signature))
+            return jsonify(True)
+    elif platform == 'Algorand':
+        if algosdk.util.verify_bytes(payload.encode('utf-8'), signature, sender_public_key):
+            checkOrder(Order(sender_pk=sender_public_key, receiver_pk=receiver_public_key,
+                             buy_currency=buy_currency, sell_currency=sell_currency, buy_amount=buy_amount,
+                             sell_amount=sell_amount, signature=signature))
+            return jsonify(True)
+        else:
+            log_message(content)
+            return jsonify(False)
+
         
 
 @app.route('/order_book')
 def order_book():
     #Your code here
-    #Note that you can access the database session using g.session
-    return jsonify(result)
+    data = []
+	for order in g.session.query(Order).all():
+        storeData(order, data)
+        return jsonify(data=data)
 
 if __name__ == '__main__':
     app.run(port='5002')
