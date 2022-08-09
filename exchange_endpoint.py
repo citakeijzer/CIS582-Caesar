@@ -30,7 +30,7 @@ def shutdown_session(response_or_exc):
 
 
 """ Suggested helper methods """
-def attachList(order, data):
+def recordData(order, data):
     data.append({
         'sender_pk': order.sender_pk,
         'receiver_pk': order.receiver_pk,
@@ -41,47 +41,34 @@ def attachList(order, data):
         'signature': order.signature
     })
 
-def executeOrder(order):
+def matchOrder(order):
 
     g.session.add(order)
     g.session.commit()
-    partya = Fillbuys(order)
+    partya = filterOrder(order)
 
     if (partya is not None):
-        nextaccount = setBuys(order, partya)
+        nextaccount = executeOrder(order, partya)
         if (nextaccount is not None):
-            executeOrder(nextaccount)
+            matchOrder(nextaccount)
 
     else:
         return
 
-def Fillbuys(new_order):
+def filterOrder(new_order):
     partya = g.session.query(Order).filter(Order.filled == None, Order.sell_currency == new_order.buy_currency, Order.buy_currency == new_order.sell_currency,((Order.sell_amount / Order.buy_amount) >= (new_order.buy_amount / new_order.sell_amount)), Order.sell_amount != Order.buy_amount, new_order.buy_amount != new_order.sell_amount)
 
     return partya.first()
 
 
-def setBuys(partyb, partya):
+def executeOrder(partyb, partya):
     partyb.filled = datetime.now()
     partya.filled = datetime.now()
 
     partyb.counterparty_id = partya.id
     partya.counterparty_id = partyb.id
 
-    if partyb.buy_amount > partya.sell_amount:
-
-        remaining = partyb.buy_amount - partya.sell_amount
-        FX = partyb.buy_amount / partyb.sell_amount
-
-        nextparty = Order(creator_id=partyb.id, sender_pk=partyb.sender_pk,
-                                  receiver_pk=partyb.receiver_pk,
-                                  buy_currency=partyb.buy_currency,
-                                  sell_currency=partyb.sell_currency, buy_amount=remaining,
-                                  sell_amount=remaining / FX)
-        g.session.add(nextparty)
-        g.session.commit()
-
-    elif partyb.buy_amount < partya.sell_amount:
+    if partyb.buy_amount < partya.sell_amount:
 
         # Create a new order for remaining balance
         remaining = partya.sell_amount - partyb.buy_amount
@@ -92,6 +79,19 @@ def setBuys(partyb, partya):
                                   buy_currency=partya.buy_currency,
                                   sell_currency=partya.sell_currency,
                                   buy_amount= remaining / FX, sell_amount=remaining)
+        g.session.add(nextparty)
+        g.session.commit()
+
+    elif partyb.buy_amount > partya.sell_amount:
+
+        remaining = partyb.buy_amount - partya.sell_amount
+        FX = partyb.buy_amount / partyb.sell_amount
+
+        nextparty = Order(creator_id=partyb.id, sender_pk=partyb.sender_pk,
+                                  receiver_pk=partyb.receiver_pk,
+                                  buy_currency=partyb.buy_currency,
+                                  sell_currency=partyb.sell_currency, buy_amount=remaining,
+                                  sell_amount=remaining / FX)
         g.session.add(nextparty)
         g.session.commit()
 
@@ -149,21 +149,21 @@ def trade():
         platform = content['payload']['platform']
 
         # TODO: Check the signature
-        if platform == 'Algorand':
-            if algosdk.util.verify_bytes(payload.encode('utf-8'), signature, sender_public_key):
-                executeOrder(Order(sender_pk=sender_public_key, receiver_pk=receiver_public_key,
+
+        # TODO: Check the signature
+        if platform == 'Ethereum':
+            e_msg = eth_account.messages.encode_defunct(text=payload)
+            if eth_account.Account.recover_message(e_msg, signature=signature) == sender_public_key:
+                matchOrder(Order(sender_pk=sender_public_key, receiver_pk=receiver_public_key,
                                     buy_currency=buy_currency, sell_currency=sell_currency, buy_amount=buy_amount,
                                     sell_amount=sell_amount, signature=signature))
                 return jsonify(True)
             else:
                 log_message(content)
                 return jsonify(False)
-
-        # TODO: Check the signature
-        elif platform == 'Ethereum':
-            e_msg = eth_account.messages.encode_defunct(text=payload)
-            if eth_account.Account.recover_message(e_msg, signature=signature) == sender_public_key:
-                executeOrder(Order(sender_pk=sender_public_key, receiver_pk=receiver_public_key,
+        elif platform == 'Algorand':
+            if algosdk.util.verify_bytes(payload.encode('utf-8'), signature, sender_public_key):
+                matchOrder(Order(sender_pk=sender_public_key, receiver_pk=receiver_public_key,
                                     buy_currency=buy_currency, sell_currency=sell_currency, buy_amount=buy_amount,
                                     sell_amount=sell_amount, signature=signature))
                 return jsonify(True)
@@ -178,7 +178,7 @@ def order_book():
     # Note that you can access the database session using g.session
     data = []
     for order in g.session.query(Order).all():
-        attachList(order, data)
+        recordData(order, data)
     return jsonify(data=data)
 
 
