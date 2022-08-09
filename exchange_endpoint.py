@@ -119,7 +119,6 @@ def trade():
                 log_message(content)
                 return jsonify(False)
 
-        error = False
         for column in columns:
             if not column in content['payload'].keys():
                 print(f"{column} not received by Trade")
@@ -127,10 +126,6 @@ def trade():
                 log_message(content)
                 return jsonify(False)
 
-        if error:
-            print(json.dumps(content))
-            log_message(content)
-            return jsonify(False)
 
         # Your code here
         # Note that you can access the database session using g.session
