@@ -45,54 +45,54 @@ def executeOrder(order):
 
     g.session.add(order)
     g.session.commit()
-    est_o = Fillbuys(order)
+    partya = Fillbuys(order)
 
-    if (est_o is not None):
-        left_account = setBuys(order, est_o)
-        if (left_account is not None):
-            executeOrder(left_account)
+    if (partya is not None):
+        nextaccount = setBuys(order, partya)
+        if (nextaccount is not None):
+            executeOrder(nextaccount)
 
     else:
         return
 
 def Fillbuys(new_order):
-    est_o = g.session.query(Order).filter(Order.filled == None, Order.sell_currency == new_order.buy_currency, Order.buy_currency == new_order.sell_currency,((Order.sell_amount / Order.buy_amount) >= (new_order.buy_amount / new_order.sell_amount)), Order.sell_amount != Order.buy_amount, new_order.buy_amount != new_order.sell_amount)
+    partya = g.session.query(Order).filter(Order.filled == None, Order.sell_currency == new_order.buy_currency, Order.buy_currency == new_order.sell_currency,((Order.sell_amount / Order.buy_amount) >= (new_order.buy_amount / new_order.sell_amount)), Order.sell_amount != Order.buy_amount, new_order.buy_amount != new_order.sell_amount)
 
-    return est_o.first()
+    return partya.first()
 
 
-def setBuys(com_o, est_o):
-    com_o.filled = datetime.now()
-    est_o.filled = datetime.now()
+def setBuys(partyb, partya):
+    partyb.filled = datetime.now()
+    partya.filled = datetime.now()
 
-    com_o.counterparty_id = est_o.id
-    est_o.counterparty_id = com_o.id
+    partyb.counterparty_id = partya.id
+    partya.counterparty_id = partyb.id
 
-    if com_o.buy_amount > est_o.sell_amount:
+    if partyb.buy_amount > partya.sell_amount:
 
-        account_left = com_o.buy_amount - est_o.sell_amount
-        exchange = com_o.buy_amount / com_o.sell_amount
+        remaining = partyb.buy_amount - partya.sell_amount
+        FX = partyb.buy_amount / partyb.sell_amount
 
-        dev_o = Order(creator_id=com_o.id, sender_pk=com_o.sender_pk,
-                                  receiver_pk=com_o.receiver_pk,
-                                  buy_currency=com_o.buy_currency,
-                                  sell_currency=com_o.sell_currency, buy_amount=account_left,
-                                  sell_amount=account_left / exchange)
-        g.session.add(dev_o)
+        nextparty = Order(creator_id=partyb.id, sender_pk=partyb.sender_pk,
+                                  receiver_pk=partyb.receiver_pk,
+                                  buy_currency=partyb.buy_currency,
+                                  sell_currency=partyb.sell_currency, buy_amount=remaining,
+                                  sell_amount=remaining / FX)
+        g.session.add(nextparty)
         g.session.commit()
 
-    elif com_o.buy_amount < est_o.sell_amount:
+    elif partyb.buy_amount < partya.sell_amount:
 
         # Create a new order for remaining balance
-        account_left = est_o.sell_amount - com_o.buy_amount
-        exchange = est_o.sell_amount / est_o.buy_amount
+        remaining = partya.sell_amount - partyb.buy_amount
+        FX = partya.sell_amount / partya.buy_amount
 
-        dev_o = Order(creator_id=est_o.id, sender_pk=est_o.sender_pk,
-                                  receiver_pk=est_o.receiver_pk,
-                                  buy_currency=est_o.buy_currency,
-                                  sell_currency=est_o.sell_currency,
-                                  buy_amount= account_left / exchange, sell_amount=account_left)
-        g.session.add(dev_o)
+        nextparty = Order(creator_id=partya.id, sender_pk=partya.sender_pk,
+                                  receiver_pk=partya.receiver_pk,
+                                  buy_currency=partya.buy_currency,
+                                  sell_currency=partya.sell_currency,
+                                  buy_amount= remaining / FX, sell_amount=remaining)
+        g.session.add(nextparty)
         g.session.commit()
 
     else:
@@ -184,4 +184,3 @@ def order_book():
 
 if __name__ == '__main__':
     app.run(port='5002')
-
