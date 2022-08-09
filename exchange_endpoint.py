@@ -36,18 +36,14 @@ def filterOrder(new_order):
     return partya.first()
 
 def executeOrder(partyb, partya):
+    partyb.counterparty_id = partya.id
+    partya.counterparty_id = partyb.id
     partyb.filled = datetime.now()
     partya.filled = datetime.now()
 
-    partyb.counterparty_id = partya.id
-    partya.counterparty_id = partyb.id
-
     if partyb.buy_amount < partya.sell_amount:
-
-        # Create a new order for remaining balance
-        remaining = partya.sell_amount - partyb.buy_amount
         FX = partya.sell_amount / partya.buy_amount
-
+        remaining = partya.sell_amount - partyb.buy_amount
         nextparty = Order(creator_id=partya.id, sender_pk=partya.sender_pk,
                                   receiver_pk=partya.receiver_pk,
                                   buy_currency=partya.buy_currency,
@@ -57,10 +53,8 @@ def executeOrder(partyb, partya):
         g.session.commit()
 
     elif partyb.buy_amount > partya.sell_amount:
-
-        remaining = partyb.buy_amount - partya.sell_amount
         FX = partyb.buy_amount / partyb.sell_amount
-
+        remaining = partyb.buy_amount - partya.sell_amount
         nextparty = Order(creator_id=partyb.id, sender_pk=partyb.sender_pk,
                                   receiver_pk=partyb.receiver_pk,
                                   buy_currency=partyb.buy_currency,
@@ -139,9 +133,6 @@ def trade():
         sell_amount = content['payload']['sell_amount']
         platform = content['payload']['platform']
 
-        # TODO: Check the signature
-
-        # TODO: Check the signature
         if platform == 'Ethereum':
             e_msg = eth_account.messages.encode_defunct(text=payload)
             if eth_account.Account.recover_message(e_msg, signature=signature) == sender_public_key:
