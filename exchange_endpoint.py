@@ -38,58 +38,58 @@ def executeOrder(new_order):
     return partyb.first()
 	
 def matchOrder(partya, partyb):
-    partya.counterparty_id = partyb.id
+	partya.counterparty_id = partyb.id
 	partyb.counterparty_id = partya.id
 	partya.filled = datetime.now()
 	partyb.filled = datetime.now()
 	if partya.buy_amount < partyb.sell_amount:
-        remaining = partyb.sell_amount - partya.buy_amount
-	    exchange = partyb.sell_amount / partyb.buy_amount
-        nextorder = Order(creator_id=partyb.id, sender_pk=partyb.sender_pk,
-                          receiver_pk=partyb.receiver_pk,
-	                      buy_currency=partyb.buy_currency,
-	                      sell_currency=partyb.sell_currency,
-	                      buy_amount= remaining / exchange, sell_amount=remaining)
-        g.session.add(nextorder)
-	    g.session.commit()
-    elif partya.buy_amount > partyb.sell_amount:
-        remaining = partya.buy_amount - partyb.sell_amount
-	    exchange = partya.buy_amount / partya.sell_amount
-        nextorder = Order(creator_id=partya.id, sender_pk=partya.sender_pk,
-                          receiver_pk=partya.receiver_pk,
-	                      buy_currency=partya.buy_currency,
-	                      sell_currency=partya.sell_currency, buy_amount=remaining,
-	                      sell_amount=remaining / exchange)
-	    g.session.add(nextorder)
-	    g.session.commit()
+		remaining = partyb.sell_amount - partya.buy_amount
+		exchange = partyb.sell_amount / partyb.buy_amount
+		nextorder = Order(creator_id=partyb.id, sender_pk=partyb.sender_pk,
+				  receiver_pk=partyb.receiver_pk,
+				  buy_currency=partyb.buy_currency,
+				  sell_currency=partyb.sell_currency,
+				  buy_amount= remaining / exchange, sell_amount=remaining)
+		g.session.add(nextorder)
+		g.session.commit()
+	elif partya.buy_amount > partyb.sell_amount:
+		remaining = partya.buy_amount - partyb.sell_amount
+		exchange = partya.buy_amount / partya.sell_amount
+		nextorder = Order(creator_id=partya.id, sender_pk=partya.sender_pk,
+				  receiver_pk=partya.receiver_pk,
+				  buy_currency=partya.buy_currency,
+				  sell_currency=partya.sell_currency, buy_amount=remaining,
+				  sell_amount=remaining / exchange)
+		g.session.add(nextorder)
+	    	g.session.commit()
 	else:
-	    g.session.commit()
+		g.session.commit()
 	
 def log_message(d):
-	    g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
-	    g.session.commit()
+	g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
+	g.session.commit()
 
 def storeData(order, data):
-	    data.append({
-	        'sender_pk': order.sender_pk,
+	data.append({
+		'sender_pk': order.sender_pk,
 	        'receiver_pk': order.receiver_pk,
 	        'buy_currency': order.buy_currency,
 	        'sell_currency': order.sell_currency,
 	        'buy_amount': order.buy_amount,
 	        'sell_amount': order.sell_amount,
 	        'signature': order.signature
-	    })
+	})
+		
 def checkOrder(order):
-    g.session.add(order)
-    g.session.commit()
+    	g.session.add(order)
+    	g.session.commit()
 	partyb = executeOrder(order)
-    
-    if (partyb is not None):
-        next_account = matchOrder(order, partyb)
-        if (next_account is not None):
-            checkOrder(next_account)
-        else:
-            return
+	if (partyb is not None):
+		next_account = matchOrder(order, partyb)
+		if (next_account is not None):
+		    checkOrder(next_account)
+		else:
+		    return
 
 """ End of helper methods """
 
@@ -110,14 +110,21 @@ def trade():
                 print( json.dumps(content) )
                 log_message(content)
                 return jsonify( False )
-        
+        error = False
+	
         for column in columns:
             if not column in content['payload'].keys():
                 print( f"{column} not received by Trade" )
                 print( json.dumps(content) )
                 log_message(content)
                 return jsonify( False )
-            
+      
+
+        if error:
+            print(json.dumps(content))
+            log_message(content)
+            return jsonify(False)
+
     signature = content['sig']
     payload = json.dumps(content['payload'])
     platform = content['payload']['platform']
@@ -136,6 +143,9 @@ def trade():
                              buy_currency=buy_currency, sell_currency=sell_currency, buy_amount=buy_amount,
                              sell_amount=sell_amount, signature=signature))
             return jsonify(True)
+        else:
+            log_message(content)
+            return jsonify(False)	
     elif platform == 'Algorand':
         if algosdk.util.verify_bytes(payload.encode('utf-8'), signature, sender_public_key):
             checkOrder(Order(sender_pk=sender_public_key, receiver_pk=receiver_public_key,
