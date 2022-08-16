@@ -214,7 +214,7 @@ def check_sig(payload, sig):
     return False
 
 
-def validate_tx(payload, order):
+def checker(payload, order):
     if order.sell_currency == "Ethereum":
         try:
             eth_tx = w3.eth.get_transaction(payload['tx_id'])
@@ -312,7 +312,7 @@ def trade():
             g.session.add(order_obj)
             g.session.commit()
 
-            if validate_tx(payload, order_obj) is False:
+            if checker(payload, order_obj) is False:
                 return jsonify(False)
 
             fill_order(order_obj)
