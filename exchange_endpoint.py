@@ -182,23 +182,20 @@ def execute_txes(txes):
     new_txes.append(secondtx)
 
     algo_txes = [tx for tx in new_txes if tx['platform'] == "Algorand"]
-    eth_txes = [tx for tx in new_txes if tx['platform'] == "Ethereum"]
-
-    eth_TX_obj = TX(platform=eth_txes[0]['platform'],
-                    receiver_pk=eth_txes[0]['receiver_pk'],
-                    order_id=eth_txes[0]['order_id'],
-                    tx_id=send_tokens_eth(w3, eth_sk, eth_txes))
-
-    g.session.add(eth_TX_obj)
-    g.session.commit()
-
     algo_TX_obj = TX(platform=algo_txes[0]['platform'],
                      receiver_pk=algo_txes[0]['receiver_pk'],
                      order_id=algo_txes[0]['order_id'],
                      tx_id=send_tokens_algo(bcl, algo_sk, algo_txes))
-
+    eth_txes = [tx for tx in new_txes if tx['platform'] == "Ethereum"]
+    eth_TX_obj = TX(platform=eth_txes[0]['platform'],
+                    receiver_pk=eth_txes[0]['receiver_pk'],
+                    order_id=eth_txes[0]['order_id'],
+                    tx_id=send_tokens_eth(w3, eth_sk, eth_txes))
     g.session.add(algo_TX_obj)
     g.session.commit()
+    g.session.add(eth_TX_obj)
+    g.session.commit()
+
 
 
 def attachList(order, data):
@@ -231,15 +228,7 @@ def check_sig(payload, sig):
 
 def validate_tx(payload, order):
 
-    if order.sell_currency == "Algorand":
-        wait_for_confirmation_algo(connect_to_algo(), payload['tx_id'])
-        algo_txes = acl.search_transactions(txid=payload['tx_id'])
-
-        for algo_tx in algo_txes['transactions']:
-            if algo_tx['payment-transaction']['amount'] == payload['sell_amount'] and algo_tx['sender'] == payload['sender_pk']:
-                return True
-
-    elif order.sell_currency == "Ethereum":
+    if order.sell_currency == "Ethereum":
         try:
             eth_tx = w3.eth.get_transaction(payload['tx_id'])
         except Exception as e:
@@ -247,7 +236,13 @@ def validate_tx(payload, order):
             return False
         if eth_tx['from'] == payload['sender_pk'] and eth_tx['value'] == payload['sell_amount']:
             return True
+    elif order.sell_currency == "Algorand":
+        wait_for_confirmation_algo(connect_to_algo(), payload['tx_id'])
+        algo_txes = acl.search_transactions(txid=payload['tx_id'])
 
+        for algo_tx in algo_txes['transactions']:
+            if algo_tx['payment-transaction']['amount'] == payload['sell_amount'] and algo_tx['sender'] == payload['sender_pk']:
+                return True
     return False
 
 def log_message(d):
