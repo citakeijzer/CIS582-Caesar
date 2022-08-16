@@ -13,36 +13,22 @@ def connect_to_algo(connection_type=''):
     headers = {"X-API-Key": algod_token, }
 
     if connection_type == "indexer":
-        # TODO: return an instance of the v2client indexer. This is used for checking payments for tx_id's
         algod_address = "https://testnet-algorand.api.purestake.io/idx2"
         algodclient = indexer.IndexerClient(
             algod_token, algod_address, headers)
     else:
-        # TODO: return an instance of the client for sending transactions
         algod_address = "https://testnet-algorand.api.purestake.io/ps2"
         algodclient = algod.AlgodClient(algod_token, algod_address, headers)
-
     return algodclient
 
 
 def send_tokens_algo(acl, sender_sk, txes):
-    # TODO: You might want to adjust the first/last valid rounds in the suggested_params
-    #       See guide for details
-
-    # TODO: For each transaction, do the following:
-    #       - Create the Payment transaction 
-    #       - Sign the transaction
-    
-    # TODO: Return a list of transaction id's
     params = acl.suggested_params()
     sender_pk = account.address_from_private_key(sender_sk)
     receiver_pk = txes[0]['receiver_pk']
     tx_amount = txes[0]['send_amount']
-
     unsigned_tx = transaction.PaymentTxn(sender_pk, params, receiver_pk, tx_amount)
-
     signed_tx = unsigned_tx.sign(sender_sk)
-
     sent_tx = acl.send_transaction(signed_tx)
     wait_for_confirmation_algo(acl, sent_tx)
 
@@ -113,12 +99,9 @@ def send_tokens_eth(w3, sender_sk, txes):
 
     sender_account = w3.eth.account.privateKeyToAccount(sender_sk)
     sender_pk = sender_account._address
-    # TODO: For each of the txes, sign and send them to the testnet
-    # Make sure you track the nonce -locally-
     starting_nonce = w3.eth.get_transaction_count(sender_pk, 'pending')
     receiver_public_ley = txes[0]['receiver_pk']
     tx_amount = txes[0]['send_amount']
-
     tx_dict = {
         'nonce': starting_nonce,
         'gasPrice': w3.eth.gas_price,
