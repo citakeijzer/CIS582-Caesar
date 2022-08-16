@@ -2,6 +2,9 @@ from flask import Flask, request, g
 from flask_restful import Resource, Api
 from sqlalchemy import create_engine
 from flask import jsonify
+from web3 import Web3
+from send_tokens import connect_to_algo, connect_to_eth, send_tokens_algo, send_tokens_eth
+from models import Base, Order, TX
 import json
 import eth_account
 import algosdk
@@ -13,10 +16,6 @@ import math
 import sys
 import traceback
 
-# TODO: make sure you implement connect_to_algo, send_tokens_algo, and send_tokens_eth
-from web3 import Web3
-from send_tokens import connect_to_algo, connect_to_eth, send_tokens_algo, send_tokens_eth
-from models import Base, Order, TX
 
 w3 = connect_to_eth()
 acl = connect_to_algo(connection_type="indexer")
@@ -93,55 +92,26 @@ def connect_to_blockchains():
 """ Helper Methods (skeleton code for you to implement) """
 
 
-def log_message(d):
-    # Takes input dictionary d and writes it to the Log table
-    # Hint: use json.dumps or str() to get it in a nice string form
-    g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
-    g.session.commit()
-
-
-def get_algo_keys():
-    # TODO: Generate or read (using the mnemonic secret)
-    # the algorand public/private keys
-    algo_sk = 'JnU3uxlyHBK5Dut5KSzkkYu+FauQeG0U/iGLMmn4bt04XRixztR3qSmFsGpJL4BUeggwv35632TAUBmfXlJzMQ=='
-    algo_pk = 'HBORRMOO2R32SKMFWBVESL4AKR5AQMF7PZ5N6ZGAKAMZ6XSSOMY2IRKSHU'
-
-    return algo_sk, algo_pk
-
-
-def get_eth_keys(filename="eth_mnemonic.txt"):
-    # TODO: Generate or read (using the mnemonic secret)
-    # the ethereum public/private keys
-    eth_pk = '0xca76a112701A240BDb038d45839BA18c3015EA2c'
-    eth_sk = b'Q\x15+E\xa1\xde\x84\xa7\xa4\x80/\xaf.\xf0%|\xf2\xc9\x93\xf9\xf1\xb7\xf2\x92\xaa\x01\x14\x8b\x17b\xf5\xac'
-
-    return eth_sk, eth_pk
-
-
 def fill_order(order):
-    # TODO:
-    # Match orders (same as Exchange Server II)
-    # Validate the order has a payment to back it (make sure the counterparty also made a payment)
-    # Make sure that you end up executing all resulting transactions!
 
-    rank = g.session.query(Order).filter(Order.filled == None).all()
+    filtered = g.session.query(Order).filter(Order.filled == None).all()
 
-    for matched_order in rank:
-        if matched_order.sell_currency == order.buy_currency and matched_order.buy_currency == order.sell_currency:
+    for selected in filtered:
+        if selected.sell_currency == order.buy_currency and selected.buy_currency == order.sell_currency:
 
-            if ((matched_order.sell_amount / matched_order.buy_amount) >= (order.buy_amount / order.sell_amount)):
+            if ((selected.sell_amount / selected.buy_amount) >= (order.buy_amount / order.sell_amount)):
 
                 order.filled = datetime.now()
-                matched_order.filled = datetime.now()
+                selected.filled = datetime.now()
 
-                order.counterparty_id = matched_order.id
-                matched_order.counterparty_id = order.id
+                order.counterparty_id = selected.id
+                selected.counterparty_id = order.id
 
-                txes = [order, matched_order]
+                txes = [order, selected]
                 execute_txes(txes)
 
-                if order.buy_amount > matched_order.sell_amount:
-                    left = order.buy_amount - matched_order.sell_amount
+                if order.buy_amount > selected.sell_amount:
+                    remainder = order.buy_amount - selected.sell_amount
                     exchange = order.buy_amount / order.sell_amount
 
                     dev_o = Order(creator_id=order.id,
@@ -150,26 +120,26 @@ def fill_order(order):
                                               receiver_pk=order.receiver_pk,
                                               buy_currency=order.buy_currency,
                                               sell_currency=order.sell_currency,
-                                              buy_amount=left,
+                                              buy_amount=remainder,
                                               sell_amount=math.ceil(
-                                                  left / exchange),
+                                                  remainder / exchange),
                                               filled=None)
                     g.session.add(dev_o)
 
 
-                elif matched_order.buy_amount > order.sell_amount:
+                elif selected.buy_amount > order.sell_amount:
                     # For the remaining part to create an account
-                    left = matched_order.buy_amount - order.sell_amount
-                    exchange = matched_order.sell_amount / matched_order.buy_amount
+                    remainder = selected.buy_amount - order.sell_amount
+                    exchange = selected.sell_amount / selected.buy_amount
 
-                    dev_o = Order(creator_id=matched_order.id,
+                    dev_o = Order(creator_id=selected.id,
                                               counterparty_id=None,
-                                              sender_pk=matched_order.sender_pk,
-                                              receiver_pk=matched_order.receiver_pk,
-                                              buy_currency=matched_order.buy_currency,
-                                              sell_currency=matched_order.sell_currency,
-                                              buy_amount=left, sell_amount=math.ceil(
-                                                  left * exchange),
+                                              sender_pk=selected.sender_pk,
+                                              receiver_pk=selected.receiver_pk,
+                                              buy_currency=selected.buy_currency,
+                                              sell_currency=selected.sell_currency,
+                                              buy_amount=remainder, sell_amount=math.ceil(
+                                                  remainder * exchange),
                                               filled=None)
                     g.session.add(dev_o)
                 g.session.commit()
@@ -191,25 +161,25 @@ def execute_txes(txes):
         print(tx.sell_currency for tx in txes)
 
     order = txes[0]
-    matched_order = txes[1]
+    selected = txes[1]
     new_txes = []
 
-    tx1 = {
-        'platform': matched_order.buy_currency,
-        'receiver_pk': matched_order.receiver_pk,
-        'order_id': matched_order.id,
+    firsttx = {
+        'platform': selected.buy_currency,
+        'receiver_pk': selected.receiver_pk,
+        'order_id': selected.id,
         'tx_id': 0,
-        'send_amount': min(order.sell_amount, matched_order.buy_amount)
+        'send_amount': min(order.sell_amount, selected.buy_amount)
     }
-    new_txes.append(tx1)
-    tx2 = {
+    new_txes.append(firsttx)
+    secondtx = {
         'platform': order.buy_currency,
         'receiver_pk': order.receiver_pk,
         'order_id': order.id,
         'tx_id': 0,
-        'send_amount': min(order.buy_amount, matched_order.sell_amount)
+        'send_amount': min(order.buy_amount, selected.sell_amount)
     }
-    new_txes.append(tx2)
+    new_txes.append(secondtx)
 
     algo_txes = [tx for tx in new_txes if tx['platform'] == "Algorand"]
     eth_txes = [tx for tx in new_txes if tx['platform'] == "Ethereum"]
@@ -280,7 +250,20 @@ def validate_tx(payload, order):
 
     return False
 
+def log_message(d):
+    g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
+    g.session.commit()
 
+
+def get_algo_keys():
+    algo_sk = 'JnU3uxlyHBK5Dut5KSzkkYu+FauQeG0U/iGLMmn4bt04XRixztR3qSmFsGpJL4BUeggwv35632TAUBmfXlJzMQ=='
+    algo_pk = 'HBORRMOO2R32SKMFWBVESL4AKR5AQMF7PZ5N6ZGAKAMZ6XSSOMY2IRKSHU'
+    return algo_sk, algo_pk
+
+def get_eth_keys(filename="eth_mnemonic.txt"):
+    eth_pk = '0xca76a112701A240BDb038d45839BA18c3015EA2c'
+    eth_sk = b'Q\x15+E\xa1\xde\x84\xa7\xa4\x80/\xaf.\xf0%|\xf2\xc9\x93\xf9\xf1\xb7\xf2\x92\xaa\x01\x14\x8b\x17b\xf5\xac'
+    return eth_sk, eth_pk
 """ End of Helper methods"""
 
 
