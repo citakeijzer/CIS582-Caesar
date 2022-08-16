@@ -213,6 +213,21 @@ def check_sig(payload, sig):
             return True
     return False
 
+def log_message(d):
+    g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
+    g.session.commit()
+
+
+def get_algo_keys():
+    algo_sk = 'JnU3uxlyHBK5Dut5KSzkkYu+FauQeG0U/iGLMmn4bt04XRixztR3qSmFsGpJL4BUeggwv35632TAUBmfXlJzMQ=='
+    algo_pk = 'HBORRMOO2R32SKMFWBVESL4AKR5AQMF7PZ5N6ZGAKAMZ6XSSOMY2IRKSHU'
+    return algo_sk, algo_pk
+
+def get_eth_keys(filename="eth_mnemonic.txt"):
+    eth_pk = '0xca76a112701A240BDb038d45839BA18c3015EA2c'
+    eth_sk = b'Q\x15+E\xa1\xde\x84\xa7\xa4\x80/\xaf.\xf0%|\xf2\xc9\x93\xf9\xf1\xb7\xf2\x92\xaa\x01\x14\x8b\x17b\xf5\xac'
+    return eth_sk, eth_pk
+
 
 def checker(payload, order):
     if order.sell_currency == "Ethereum":
@@ -232,20 +247,7 @@ def checker(payload, order):
                 return True
     return False
 
-def log_message(d):
-    g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
-    g.session.commit()
 
-
-def get_algo_keys():
-    algo_sk = 'JnU3uxlyHBK5Dut5KSzkkYu+FauQeG0U/iGLMmn4bt04XRixztR3qSmFsGpJL4BUeggwv35632TAUBmfXlJzMQ=='
-    algo_pk = 'HBORRMOO2R32SKMFWBVESL4AKR5AQMF7PZ5N6ZGAKAMZ6XSSOMY2IRKSHU'
-    return algo_sk, algo_pk
-
-def get_eth_keys(filename="eth_mnemonic.txt"):
-    eth_pk = '0xca76a112701A240BDb038d45839BA18c3015EA2c'
-    eth_sk = b'Q\x15+E\xa1\xde\x84\xa7\xa4\x80/\xaf.\xf0%|\xf2\xc9\x93\xf9\xf1\xb7\xf2\x92\xaa\x01\x14\x8b\x17b\xf5\xac'
-    return eth_sk, eth_pk
 """ End of Helper methods"""
 
 
