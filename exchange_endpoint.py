@@ -1,22 +1,19 @@
-from flask import Flask, request, g
-from flask_restful import Resource, Api
-from sqlalchemy import create_engine
-from flask import jsonify
 import json
 import eth_account
 import algosdk
+import math
+import sys
+import tracebackfrom flask import Flask, request, g
+from flask_restful import Resource, Api
+from sqlalchemy import create_engine
+from flask import jsonify
+from web3 import Web3
+from send_tokens import connect_to_algo, connect_to_eth, send_tokens_algo, send_tokens_eth
+from models import Base, Order, TX
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import load_only
 from datetime import datetime
-import math
-import sys
-import traceback
-
-# TODO: make sure you implement connect_to_algo, send_tokens_algo, and send_tokens_eth
-from web3 import Web3
-from send_tokens import connect_to_algo, connect_to_eth, send_tokens_algo, send_tokens_eth
-from models import Base, Order, TX
 
 w3 = connect_to_eth()
 acl = connect_to_algo(connection_type="indexer")
@@ -93,16 +90,7 @@ def connect_to_blockchains():
 """ Helper Methods (skeleton code for you to implement) """
 
 
-def log_message(d):
-    # Takes input dictionary d and writes it to the Log table
-    # Hint: use json.dumps or str() to get it in a nice string form
-    g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
-    g.session.commit()
-
-
 def get_algo_keys():
-    # TODO: Generate or read (using the mnemonic secret)
-    # the algorand public/private keys
     algo_sk = 'JnU3uxlyHBK5Dut5KSzkkYu+FauQeG0U/iGLMmn4bt04XRixztR3qSmFsGpJL4BUeggwv35632TAUBmfXlJzMQ=='
     algo_pk = 'HBORRMOO2R32SKMFWBVESL4AKR5AQMF7PZ5N6ZGAKAMZ6XSSOMY2IRKSHU'
 
@@ -110,68 +98,66 @@ def get_algo_keys():
 
 
 def get_eth_keys(filename="eth_mnemonic.txt"):
-    # TODO: Generate or read (using the mnemonic secret)
-    # the ethereum public/private keys
     eth_pk = '0xca76a112701A240BDb038d45839BA18c3015EA2c'
     eth_sk = b'Q\x15+E\xa1\xde\x84\xa7\xa4\x80/\xaf.\xf0%|\xf2\xc9\x93\xf9\xf1\xb7\xf2\x92\xaa\x01\x14\x8b\x17b\xf5\xac'
 
     return eth_sk, eth_pk
 
 
+def log_message(d):
+    g.session.add(Log(logtime=datetime.now(), message=json.dumps(d)))
+    g.session.commit()
+
+
 def fill_order(order):
-    # TODO:
-    # Match orders (same as Exchange Server II)
-    # Validate the order has a payment to back it (make sure the counterparty also made a payment)
-    # Make sure that you end up executing all resulting transactions!
+    filteredorder = g.session.query(Order).filter(Order.filled == None).all()
 
-    rank = g.session.query(Order).filter(Order.filled == None).all()
+    for chosen in filteredorder:
+        if chosen.sell_currency == order.buy_currency and chosen.buy_currency == order.sell_currency:
 
-    for matched_order in rank:
-        if matched_order.sell_currency == order.buy_currency and matched_order.buy_currency == order.sell_currency:
-
-            if ((matched_order.sell_amount / matched_order.buy_amount) >= (order.buy_amount / order.sell_amount)):
+            if ((chosen.sell_amount / chosen.buy_amount) >= (order.buy_amount / order.sell_amount)):
 
                 order.filled = datetime.now()
-                matched_order.filled = datetime.now()
+                chosen.filled = datetime.now()
 
-                order.counterparty_id = matched_order.id
-                matched_order.counterparty_id = order.id
+                order.counterparty_id = chosen.id
+                chosen.counterparty_id = order.id
 
-                txes = [order, matched_order]
+                txes = [order, chosen]
                 execute_txes(txes)
 
-                if order.buy_amount > matched_order.sell_amount:
-                    left = order.buy_amount - matched_order.sell_amount
+
+                if chosen.buy_amount > order.sell_amount:
+                    remainder = chosen.buy_amount - order.sell_amount
+                    exchange = chosen.sell_amount / chosen.buy_amount
+
+                    executed = Order(creator_id=chosen.id,
+                                              counterparty_id=None,
+                                              sender_pk=chosen.sender_pk,
+                                              receiver_pk=chosen.receiver_pk,
+                                              buy_currency=chosen.buy_currency,
+                                              sell_currency=chosen.sell_currency,
+                                              buy_amount=remainder, sell_amount=math.ceil(
+                                                  remainder * exchange),
+                                              filled=None)
+                    g.session.add(executed)
+
+                elif order.buy_amount > chosen.sell_amount:
+                    remainder = order.buy_amount - chosen.sell_amount
                     exchange = order.buy_amount / order.sell_amount
 
-                    dev_o = Order(creator_id=order.id,
+                    executed = Order(creator_id=order.id,
                                               counterparty_id=None,
                                               sender_pk=order.sender_pk,
                                               receiver_pk=order.receiver_pk,
                                               buy_currency=order.buy_currency,
                                               sell_currency=order.sell_currency,
-                                              buy_amount=left,
+                                              buy_amount=remainder,
                                               sell_amount=math.ceil(
-                                                  left / exchange),
+                                                  remainder / exchange),
                                               filled=None)
-                    g.session.add(dev_o)
-
-
-                elif matched_order.buy_amount > order.sell_amount:
-                    # For the remaining part to create an account
-                    left = matched_order.buy_amount - order.sell_amount
-                    exchange = matched_order.sell_amount / matched_order.buy_amount
-
-                    dev_o = Order(creator_id=matched_order.id,
-                                              counterparty_id=None,
-                                              sender_pk=matched_order.sender_pk,
-                                              receiver_pk=matched_order.receiver_pk,
-                                              buy_currency=matched_order.buy_currency,
-                                              sell_currency=matched_order.sell_currency,
-                                              buy_amount=left, sell_amount=math.ceil(
-                                                  left * exchange),
-                                              filled=None)
-                    g.session.add(dev_o)
+                    g.session.add(executed)
+                    
                 g.session.commit()
                 break
 
@@ -187,19 +173,19 @@ def execute_txes(txes):
     eth_sk, eth_pk = get_eth_keys()
 
     if not all(tx.sell_currency in ["Algorand", "Ethereum"] for tx in txes):
-        print("Error: execute_txes got an invalid platform!")
+        print("Invalid platform.")
         print(tx.sell_currency for tx in txes)
-
-    order = txes[0]
-    matched_order = txes[1]
     new_txes = []
+    order = txes[0]
+    chosen = txes[1]
+
 
     tx1 = {
-        'platform': matched_order.buy_currency,
-        'receiver_pk': matched_order.receiver_pk,
-        'order_id': matched_order.id,
+        'platform': chosen.buy_currency,
+        'receiver_pk': chosen.receiver_pk,
+        'order_id': chosen.id,
         'tx_id': 0,
-        'send_amount': min(order.sell_amount, matched_order.buy_amount)
+        'send_amount': min(order.sell_amount, chosen.buy_amount)
     }
     new_txes.append(tx1)
     tx2 = {
@@ -207,20 +193,12 @@ def execute_txes(txes):
         'receiver_pk': order.receiver_pk,
         'order_id': order.id,
         'tx_id': 0,
-        'send_amount': min(order.buy_amount, matched_order.sell_amount)
+        'send_amount': min(order.buy_amount, chosen.sell_amount)
     }
     new_txes.append(tx2)
 
-    algo_txes = [tx for tx in new_txes if tx['platform'] == "Algorand"]
     eth_txes = [tx for tx in new_txes if tx['platform'] == "Ethereum"]
-
-    eth_TX_obj = TX(platform=eth_txes[0]['platform'],
-                    receiver_pk=eth_txes[0]['receiver_pk'],
-                    order_id=eth_txes[0]['order_id'],
-                    tx_id=send_tokens_eth(w3, eth_sk, eth_txes))
-
-    g.session.add(eth_TX_obj)
-    g.session.commit()
+    algo_txes = [tx for tx in new_txes if tx['platform'] == "Algorand"]
 
     algo_TX_obj = TX(platform=algo_txes[0]['platform'],
                      receiver_pk=algo_txes[0]['receiver_pk'],
@@ -229,6 +207,15 @@ def execute_txes(txes):
 
     g.session.add(algo_TX_obj)
     g.session.commit()
+    
+    eth_TX_obj = TX(platform=eth_txes[0]['platform'],
+                    receiver_pk=eth_txes[0]['receiver_pk'],
+                    order_id=eth_txes[0]['order_id'],
+                    tx_id=send_tokens_eth(w3, eth_sk, eth_txes))
+
+    g.session.add(eth_TX_obj)
+    g.session.commit()
+
 
 
 def attachList(order, data):
@@ -260,16 +247,7 @@ def check_sig(payload, sig):
 
 
 def validate_tx(payload, order):
-
-    if order.sell_currency == "Algorand":
-        wait_for_confirmation_algo(connect_to_algo(), payload['tx_id'])
-        algo_txes = acl.search_transactions(txid=payload['tx_id'])
-
-        for algo_tx in algo_txes['transactions']:
-            if algo_tx['payment-transaction']['amount'] == payload['sell_amount'] and algo_tx['sender'] == payload['sender_pk']:
-                return True
-
-    elif order.sell_currency == "Ethereum":
+    if order.sell_currency == "Ethereum":
         try:
             eth_tx = w3.eth.get_transaction(payload['tx_id'])
         except Exception as e:
@@ -277,7 +255,13 @@ def validate_tx(payload, order):
             return False
         if eth_tx['from'] == payload['sender_pk'] and eth_tx['value'] == payload['sell_amount']:
             return True
+    elif order.sell_currency == "Algorand":
+        wait_for_confirmation_algo(connect_to_algo(), payload['tx_id'])
+        algo_txes = acl.search_transactions(txid=payload['tx_id'])
 
+        for algo_tx in algo_txes['transactions']:
+            if algo_tx['payment-transaction']['amount'] == payload['sell_amount'] and algo_tx['sender'] == payload['sender_pk']:
+                return True
     return False
 
 
