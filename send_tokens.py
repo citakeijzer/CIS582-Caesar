@@ -6,6 +6,11 @@ from algosdk.mnemonic import from_private_key
 from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.v2client import indexer
+from web3 import Web3
+from web3.middleware import geth_poa_middleware
+from web3.exceptions import TransactionNotFound
+import json
+import progressbar
 
 def connect_to_algo(connection_type=''):
     # Connect to Algorand node maintained by PureStake
@@ -42,11 +47,6 @@ def wait_for_confirmation_algo(client, txid):
 
 ##################################
 
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
-from web3.exceptions import TransactionNotFound
-import json
-import progressbar
 
 def connect_to_eth():
     IP_ADDR = '3.23.118.2'  # Private Ethereum
