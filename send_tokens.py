@@ -61,18 +61,7 @@ def connect_to_eth():
     else:
         print("Failed to connect to Eth")
         return None
-    
-def send_tokens_algo(acl, sender_sk, txes):
-    params = acl.suggested_params()
-    sender_pk = account.address_from_private_key(sender_sk)
-    receiver_pk = txes[0]['receiver_pk']
-    tx_amount = txes[0]['send_amount']
-    unsigned_tx = transaction.PaymentTxn(sender_pk, params, receiver_pk, tx_amount)
-    signed_tx = unsigned_tx.sign(sender_sk)
-    sent_tx = acl.send_transaction(signed_tx)
-    wait_for_confirmation_algo(acl, sent_tx)
 
-    return sent_tx
 
 def wait_for_confirmation_eth(w3, tx_hash):
     print("Waiting for confirmation")
@@ -112,3 +101,15 @@ def send_tokens_eth(w3, sender_sk, txes):
     wait_for_confirmation_eth(w3, tx_id)
 
     return tx_id
+    
+def send_tokens_algo(acl, sender_sk, txes):
+    params = acl.suggested_params()
+    sender_pk = account.address_from_private_key(sender_sk)
+    receiver_pk = txes[0]['receiver_pk']
+    tx_amount = txes[0]['send_amount']
+    unsigned_tx = transaction.PaymentTxn(sender_pk, params, receiver_pk, tx_amount)
+    signed_tx = unsigned_tx.sign(sender_sk)
+    sent_tx = acl.send_transaction(signed_tx)
+    wait_for_confirmation_algo(acl, sent_tx)
+
+    return sent_tx
