@@ -97,23 +97,17 @@ def fill_order(order):
     filtered = g.session.query(Order).filter(Order.filled == None).all()
 
     for selected in filtered:
-        if selected.sell_currency == order.buy_currency and selected.buy_currency == order.sell_currency:
-
+        if selected.buy_currency == order.sell_currency and selected.sell_currency == order.buy_currency:
             if ((selected.sell_amount / selected.buy_amount) >= (order.buy_amount / order.sell_amount)):
-
                 order.filled = datetime.now()
                 selected.filled = datetime.now()
-
                 order.counterparty_id = selected.id
                 selected.counterparty_id = order.id
-
                 txes = [order, selected]
                 execute_txes(txes)
-
                 if order.buy_amount > selected.sell_amount:
                     remainder = order.buy_amount - selected.sell_amount
                     exchange = order.buy_amount / order.sell_amount
-
                     dev_o = Order(creator_id=order.id,
                                               counterparty_id=None,
                                               sender_pk=order.sender_pk,
@@ -121,25 +115,20 @@ def fill_order(order):
                                               buy_currency=order.buy_currency,
                                               sell_currency=order.sell_currency,
                                               buy_amount=remainder,
-                                              sell_amount=math.ceil(
-                                                  remainder / exchange),
+                                              sell_amount=remainder / exchange,
                                               filled=None)
                     g.session.add(dev_o)
-
-
                 elif selected.buy_amount > order.sell_amount:
-                    # For the remaining part to create an account
                     remainder = selected.buy_amount - order.sell_amount
                     exchange = selected.sell_amount / selected.buy_amount
-
                     dev_o = Order(creator_id=selected.id,
                                               counterparty_id=None,
                                               sender_pk=selected.sender_pk,
                                               receiver_pk=selected.receiver_pk,
                                               buy_currency=selected.buy_currency,
                                               sell_currency=selected.sell_currency,
-                                              buy_amount=remainder, sell_amount=math.ceil(
-                                                  remainder * exchange),
+                                              buy_amount=remainder, 
+                                              sell_amount=remainder * exchange,
                                               filled=None)
                     g.session.add(dev_o)
                 g.session.commit()
@@ -212,7 +201,6 @@ def attachList(order, data):
 
 
 def check_sig(payload, sig):
-
     sender_public_key = payload['sender_pk']
     platform = payload['platform']
     payload = json.dumps(payload)
@@ -227,7 +215,6 @@ def check_sig(payload, sig):
 
 
 def validate_tx(payload, order):
-
     if order.sell_currency == "Ethereum":
         try:
             eth_tx = w3.eth.get_transaction(payload['tx_id'])
